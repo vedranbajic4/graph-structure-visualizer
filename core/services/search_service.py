@@ -1,4 +1,4 @@
-# platform/services/search_service.py
+# core/services/search_service.py
 import re
 from api.api.models.graph import Graph
 from .exceptions import SearchParseError
