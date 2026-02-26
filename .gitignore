@@ -1,3 +1,8 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
 # Python
 __pycache__/
 *.py[cod]
