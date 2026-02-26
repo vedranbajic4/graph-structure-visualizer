@@ -1,4 +1,4 @@
-# platform/services/exceptions.py
+# core/services/exceptions.py
 
 class FilterParseError(Exception):
     """Raised when filter query has invalid syntax."""
