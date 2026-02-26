@@ -53,7 +53,7 @@ class VisualizerPlugin(ABC):
         """
         Main method: Converts a graph into an HTML representation.
 
-        NOTE: The platform has already loaded the D3.js library.
+        NOTE: The core has already loaded the D3.js library.
         This method should return HTML/JS code that uses data from the graph
         to draw it in a <div id="graph-container"> or similar.
 
