@@ -109,3 +109,38 @@ class TestGraphFiltering:
         """City == Paris should match Alice, Carol, Iris, Nathan."""
         result = service.filter(stub_graph, "City == Paris")
         assert set(result.nodes.keys()) == {"n1", "n3", "n9", "n14"}
+
+
+class TestSuccessiveApplication:
+    """Chaining filter and search operations on successive subgraphs."""
+
+    def test_successive_filters(self, service, stub_graph):
+        """Filter City==Paris then Age>30 → only Carol(n3) and Iris(n9)."""
+        g2 = service.filter(stub_graph, "City == Paris")
+        assert set(g2.nodes.keys()) == {"n1", "n3", "n9", "n14"}
+
+        g3 = service.filter(g2, "Age > 30")
+        result_ids = set(g3.nodes.keys())
+        assert result_ids == {"n3", "n9", "n14"}
+
+    def test_search_then_filter(self, service, stub_graph):
+        """SearchService produces a subgraph; FilterService must accept it."""
+        from core.services.search_service import SearchService
+
+        search = SearchService()
+        g2 = search.search(stub_graph, "City")       # all nodes have City
+        assert len(g2.nodes) == 15
+
+        g3 = service.filter(g2, "Age >= 35")
+        assert set(g3.nodes.keys()) == {"n3", "n6", "n10", "n14"}
+
+    def test_filter_then_search(self, service, stub_graph):
+        """FilterService output must be accepted by SearchService."""
+        from core.services.search_service import SearchService
+
+        g2 = service.filter(stub_graph, "City == Berlin")
+        assert set(g2.nodes.keys()) == {"n4", "n7", "n12"}
+
+        search = SearchService()
+        g3 = search.search(g2, "Name=Grace")
+        assert set(g3.nodes.keys()) == {"n7"}
