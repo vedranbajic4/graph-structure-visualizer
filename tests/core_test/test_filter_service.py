@@ -77,3 +77,35 @@ class TestNodeEvaluation:
         """Non-numeric value for an int attribute must raise FilterTypeError."""
         with pytest.raises(FilterTypeError):
             service._evaluate_node(node_age_30, "Age", ">", "twenty")
+
+
+class TestGraphFiltering:
+    """Integration tests using the full stub_graph fixture."""
+
+    def test_filter_by_age_greater_than(self, service, stub_graph):
+        """Age >= 35 should match Carol(35), Frank(40), Jack(45), Nathan(50)."""
+        result = service.filter(stub_graph, "Age >= 35")
+
+        result_ids = set(result.nodes.keys())
+        assert result_ids == {"n3", "n6", "n10", "n14"}
+
+    def test_filter_preserves_edges_between_matching_nodes(self, service, stub_graph):
+        """Only edges where both endpoints match should survive."""
+        result = service.filter(stub_graph, "Age >= 35")
+
+        for edge in result.get_all_edges():
+            assert edge.source_node.node_id in result.nodes
+            assert edge.target_node.node_id in result.nodes
+
+    def test_filter_discards_edges_to_non_matching_nodes(self, service, stub_graph):
+        """Edges that touch a non-matching node must be absent."""
+        result = service.filter(stub_graph, "Age >= 35")
+
+        original_edge_ids = set(stub_graph.edges.keys())
+        result_edge_ids = set(result.edges.keys())
+        assert result_edge_ids < original_edge_ids  # strict subset
+
+    def test_filter_by_city_equals(self, service, stub_graph):
+        """City == Paris should match Alice, Carol, Iris, Nathan."""
+        result = service.filter(stub_graph, "City == Paris")
+        assert set(result.nodes.keys()) == {"n1", "n3", "n9", "n14"}
