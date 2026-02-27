@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'style.css' %}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title|default:"Graph Visualizer" }}</title>
+</head>
+<body>
+<div class="page-shell">
+    <header class="page-header">
+        <h1>Graph Visualizer</h1>
+    </header>
+
+    <div class="workspace-grid">
+        <aside class="panel tree-view">
+            <h2>Tree View</h2>
+            <ul class="tree-list">
+                <li>Root
+                    <ul>
+                        <li>Node A</li>
+                        <li>Node B</li>
+                    </ul>
+                </li>
+            </ul>
+        </aside>
+
+        <section class="panel bird-view">
+            <h2>Bird View</h2>
+            <div class="placeholder-box">Mini map placeholder</div>
+        </section>
+
+        <main class="panel main-view">
+            <h2>Main View</h2>
+            <div class="placeholder-box">Graph canvas placeholder</div>
+        </main>
+    </div>
+</div>
+</body>
+</html>
