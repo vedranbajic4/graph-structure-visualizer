@@ -83,11 +83,11 @@ class TestGraphFiltering:
     """Integration tests using the full stub_graph fixture."""
 
     def test_filter_by_age_greater_than(self, service, stub_graph):
-        """Age >= 35 should match Carol(35), Frank(40), Jack(45), Nathan(50)."""
+        """Age >= 35 should match Carol(35), Leo(38), Frank(40), Jack(45), Nathan(50)."""
         result = service.filter(stub_graph, "Age >= 35")
 
         result_ids = set(result.nodes.keys())
-        assert result_ids == {"n3", "n6", "n10", "n14"}
+        assert result_ids == {"n3", "n6", "n10", "n12", "n14"}
 
     def test_filter_preserves_edges_between_matching_nodes(self, service, stub_graph):
         """Only edges where both endpoints match should survive."""
@@ -132,7 +132,7 @@ class TestSuccessiveApplication:
         assert len(g2.nodes) == 15
 
         g3 = service.filter(g2, "Age >= 35")
-        assert set(g3.nodes.keys()) == {"n3", "n6", "n10", "n14"}
+        assert set(g3.nodes.keys()) == {"n3", "n6", "n10", "n12", "n14"}
 
     def test_filter_then_search(self, service, stub_graph):
         """FilterService output must be accepted by SearchService."""
@@ -144,3 +144,35 @@ class TestSuccessiveApplication:
         search = SearchService()
         g3 = search.search(g2, "Name=Grace")
         assert set(g3.nodes.keys()) == {"n7"}
+
+
+class TestDateAndAdvanced:
+    """Date type filtering and advanced edge-case scenarios."""
+
+    def test_filter_by_date(self, service, stub_graph):
+        """Born > 2000-01-01 should match Eve(n5, 2002-05-30) and Mia(n13, 2000-01-17)."""
+        result = service.filter(stub_graph, "Born > 2000-01-01")
+
+        result_ids = set(result.nodes.keys())
+        assert result_ids == {"n5", "n13"}
+
+        # Verify the Born values are actual date objects, not strings
+        for node in result.get_all_nodes():
+            born_val = node.get_attribute("Born")
+            from datetime import date
+            assert isinstance(born_val, date), (
+                f"Node {node.node_id} Born should be a date, got {type(born_val)}"
+            )
+
+    def test_filter_missing_attributes(self, service, stub_graph):
+        """Filtering by an attribute that only some nodes have should not crash;
+        nodes lacking the attribute are simply excluded."""
+        # Add a 'Hobby' attribute to only two nodes
+        stub_graph.get_node("n1").set_attribute("Hobby", "chess")
+        stub_graph.get_node("n2").set_attribute("Hobby", "painting")
+
+        result = service.filter(stub_graph, "Hobby == chess")
+
+        # Only n1 has Hobby=="chess"
+        assert set(result.nodes.keys()) == {"n1"}
+        # No crash — 13 other nodes simply lacked the attribute

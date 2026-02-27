@@ -7,7 +7,8 @@ from api.api.types import TypeValidator
 from .exceptions import FilterParseError, FilterTypeError
 
 # Regex: attribute  operator  value
-_FILTER_PATTERN = re.compile(r'^\s*(\w+)\s*(==|!=|>=|<=|>|<)\s*(.+)\s*$')
+# Negative lookahead (?![><=!]) ensures >> or >< etc. are rejected
+_FILTER_PATTERN = re.compile(r'^\s*(\w+)\s*(==|!=|>=|<=|>(?![><=!])|<(?![><=!]))\s*(.+)\s*$')
 
 
 class FilterService:
