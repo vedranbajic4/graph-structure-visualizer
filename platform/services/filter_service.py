@@ -35,8 +35,12 @@ class FilterService:
         operator = match.group(2)
         target_value_str = match.group(3).strip()
 
-        # TODO: graph iteration and subgraph construction
-        return Graph(f"{graph.graph_id}_filtered")
+        matching_ids = set()
+        for node in graph.get_all_nodes():
+            if self._evaluate_node(node, attr_name, operator, target_value_str):
+                matching_ids.add(node.node_id)
+
+        return graph.get_subgraph_by_nodes(matching_ids)
 
     def _evaluate_node(self, node: Node, attr_name: str,
                        operator: str, target_value_str: str) -> bool:
