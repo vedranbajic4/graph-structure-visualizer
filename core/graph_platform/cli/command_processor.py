@@ -73,7 +73,7 @@ class CommandProcessor:
             ``CommandResult`` with success status, message, and
             (possibly new) graph reference.
         """
-        text = text.strip()
+        text = self._strip_comments(text).strip()
         if not text:
             return CommandResult(False, "Empty command. Type 'help' for usage.", graph)
 
@@ -142,6 +142,32 @@ class CommandProcessor:
         if len(self._undo_stack) >= self._max_undo:
             self._undo_stack.pop(0)
         self._undo_stack.append((command, graph_snapshot))
+
+    # ── Comment handling ────────────────────────────────────────
+
+    @staticmethod
+    def _strip_comments(text: str) -> str:
+        """
+        Strip inline comments — everything after an unquoted ``#``.
+
+        Handles single- and double-quoted strings so that ``#``
+        inside quotes is preserved.
+
+        Example:
+            >>> CommandProcessor._strip_comments(
+            ...     "create edge --id=1 1 2   # a comment")
+            'create edge --id=1 1 2'
+        """
+        in_single = False
+        in_double = False
+        for i, ch in enumerate(text):
+            if ch == "'" and not in_double:
+                in_single = not in_single
+            elif ch == '"' and not in_single:
+                in_double = not in_double
+            elif ch == '#' and not in_single and not in_double:
+                return text[:i].rstrip()
+        return text
 
     # ── Parser ───────────────────────────────────────────────────
 

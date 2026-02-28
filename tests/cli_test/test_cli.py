@@ -961,3 +961,143 @@ class TestEdgeCases:
         p1.process("create node --id=A", g)
         assert p1.get_undo_depth() == 1
         assert p2.get_undo_depth() == 0
+
+
+# ═════════════════════════════════════════════════════════════════
+#  SPECS COMPLIANCE TESTS
+# ═════════════════════════════════════════════════════════════════
+
+class TestSpecsCompliance:
+    """Tests that verify exact SPECS §2.1.5 example commands work."""
+
+    # ── Comment stripping ────────────────────────────────────────
+
+    def test_comment_stripping_basic(self):
+        """Inline # comments should be stripped before parsing."""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        r = proc.process("create node --id=1  # this is a comment", g)
+        assert r.success is True
+        assert g.get_node("1") is not None
+
+    def test_comment_stripping_edge_with_comment(self):
+        """SPECS example: create edge --id=1 --property Name=Siblings 1 2  # ćvorovi se referenciraju pomoću id-eva"""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        proc.process("create node --id=1 --property Name=Alice", g)
+        proc.process("create node --id=2 --property Name=Tom", g)
+        r = proc.process(
+            "create edge --id=1 --property Name=Siblings 1 2  # nodes referenced by id",
+            g,
+        )
+        assert r.success is True
+        edge = g.get_edge("1")
+        assert edge is not None
+        assert edge.source_node.node_id == "1"
+        assert edge.target_node.node_id == "2"
+
+    def test_hash_inside_quotes_preserved(self):
+        """# inside quotes should NOT be treated as a comment."""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        r = proc.process('create node --id=1 --property Tag="item#3"', g)
+        assert r.success is True
+        node = g.get_node("1")
+        assert node.get_attribute("Tag") == "item#3"
+
+    def test_comment_only_line(self):
+        proc = CommandProcessor()
+        g = _empty_graph()
+        r = proc.process("# just a comment", g)
+        assert r.success is False  # empty after stripping
+
+    # ── Compound filter with && ──────────────────────────────────
+
+    def test_compound_filter_and(self):
+        """SPECS example: filter 'Age>30 && Height>=150'"""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        proc.process("create node --id=1 --property Name=Alice --property Age=25 --property Height=160", g)
+        proc.process("create node --id=2 --property Name=Tom --property Age=30 --property Height=175", g)
+        proc.process("create node --id=3 --property Name=Carol --property Age=35 --property Height=165", g)
+
+        # Age>30 → Carol (35). Tom has Age=30 which does NOT satisfy >30.
+        # Height>=150 → all three. Combined: only Carol.
+        r = proc.process("filter 'Age>30 && Height>=150'", g)
+        assert r.success is True
+        assert r.graph.get_number_of_nodes() == 1
+        assert r.graph.get_node("3") is not None  # Carol
+
+    def test_compound_filter_no_match(self):
+        proc = CommandProcessor()
+        g = _empty_graph()
+        proc.process("create node --id=1 --property Age=25 --property Height=160", g)
+        proc.process("create node --id=2 --property Age=30 --property Height=175", g)
+
+        r = proc.process("filter 'Age>50 && Height>=150'", g)
+        assert r.success is True
+        assert r.graph.get_number_of_nodes() == 0
+
+    def test_single_filter_still_works(self):
+        """Ensure single-condition filter still works after && support."""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        proc.process("create node --id=1 --property Age=25", g)
+        proc.process("create node --id=2 --property Age=35", g)
+
+        r = proc.process("filter 'Age>=30'", g)
+        assert r.success is True
+        assert r.graph.get_number_of_nodes() == 1
+
+    # ── Full SPECS example sequence ──────────────────────────────
+
+    def test_full_specs_example_sequence(self):
+        """Run through the exact example from SPECS §2.1.5."""
+        proc = CommandProcessor()
+        g = _empty_graph()
+
+        # create node --id=1 --property Name=Alice --property Age=25 --property Gender=F --property Height=160
+        r = proc.process(
+            "create node --id=1 --property Name=Alice --property Age=25 --property Gender=F --property Height=160",
+            g,
+        )
+        assert r.success is True
+
+        # create node --id=2 --property Name=Tom --property Age=30 --property Gender=M --property Height=175
+        r = proc.process(
+            "create node --id=2 --property Name=Tom --property Age=30 --property Gender=M --property Height=175",
+            g,
+        )
+        assert r.success is True
+        assert g.get_number_of_nodes() == 2
+
+        # create edge --id=1 --property Name=Siblings  1 2
+        r = proc.process("create edge --id=1 --property Name=Siblings 1 2", g)
+        assert r.success is True
+        edge = g.get_edge("1")
+        assert edge.source_node.node_id == "1"
+        assert edge.target_node.node_id == "2"
+
+        # edit node --id=2 --property Age=40
+        r = proc.process("edit node --id=2 --property Age=40", g)
+        assert r.success is True
+        assert g.get_node("2").get_attribute("Age") == 40
+
+        # search 'Name=Tom'
+        r = proc.process("search 'Name=Tom'", g)
+        assert r.success is True
+        assert r.graph.get_number_of_nodes() == 1
+        assert r.graph.get_node("2") is not None
+
+    def test_property_types_auto_detected(self):
+        """SPECS: values must be stored as proper types, not all strings."""
+        proc = CommandProcessor()
+        g = _empty_graph()
+        proc.process(
+            "create node --id=1 --property Name=Alice --property Age=25 --property Height=160",
+            g,
+        )
+        node = g.get_node("1")
+        assert isinstance(node.get_attribute("Age"), int), "Age should be int, not str"
+        assert isinstance(node.get_attribute("Height"), int), "Height should be int, not str"
+        assert isinstance(node.get_attribute("Name"), str), "Name should be str"
