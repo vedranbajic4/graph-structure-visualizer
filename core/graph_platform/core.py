@@ -12,6 +12,8 @@
                            filter/search delegation, and serialization.
     • Observer (hooks)   – ``_listeners`` dict for future view-sync
                            notifications (Main View ↔ Tree View ↔ Bird View).
+    • Command            – CLI commands via ``CommandProcessor``.
+    • Interpreter        – CLI text parsing into structured commands.
 
     Genericity (Genericnost)
     ────────────────────────
@@ -412,6 +414,55 @@ class GraphPlatform:
                 cb(**kwargs)
             except Exception as exc:
                 logger.error("Observer callback failed for '%s': %s", event, exc)
+
+    # ── CLI ─────────────────────────────────────────────────────
+
+    def execute_command(self, text: str,
+                        workspace_id: Optional[str] = None) -> Any:
+        """
+        Execute a CLI command on the active (or specified) workspace.
+
+        Uses the Command + Interpreter design patterns to parse and
+        execute the raw text.
+
+        Args:
+            text:         Raw CLI command text (e.g. "create node --id=1").
+            workspace_id: Target workspace (defaults to active).
+
+        Returns:
+            ``CommandResult`` with success status, message, and graph.
+
+        Raises:
+            RuntimeError: If no workspace is active.
+        """
+        from .cli.command_processor import CommandProcessor
+        from .cli.commands import CommandResult as _CR
+
+        ws = self._resolve_workspace(workspace_id)
+
+        if not hasattr(self, '_cli_processors'):
+            self._cli_processors: Dict[str, CommandProcessor] = {}
+
+        proc = self._cli_processors.get(ws.workspace_id)
+        if proc is None:
+            proc = CommandProcessor()
+            self._cli_processors[ws.workspace_id] = proc
+
+        result = proc.process(text, ws.current_graph)
+
+        # Handle reset sentinel
+        if result.success and getattr(result, 'data', None) and \
+                result.data.get('action') == 'reset':
+            new_graph = ws.reset()
+            self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=new_graph)
+            return _CR(True, "Workspace reset to original graph.", new_graph)
+
+        # If the command produced a new graph, update the workspace view
+        if result.success and result.graph is not None:
+            ws._current_graph = result.graph
+            self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result.graph)
+
+        return result
 
     # ── Node selection (cross-view sync) ─────────────────────────
 
