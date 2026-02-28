@@ -7,6 +7,7 @@ Public API:
     PlatformConfig      – top-level configuration
     SerializationConfig – serialization field control
     PluginLoader        – generic plugin discovery
+    CommandProcessor    – CLI command parser / invoker
 """
 from .core import GraphPlatform
 from .workspace import Workspace
@@ -16,6 +17,7 @@ from .plugin_loader import (
     create_data_source_loader,
     create_visualizer_loader,
 )
+from .cli.command_processor import CommandProcessor
 
 __all__ = [
     'GraphPlatform',
@@ -25,4 +27,5 @@ __all__ = [
     'PluginLoader',
     'create_data_source_loader',
     'create_visualizer_loader',
+    'CommandProcessor',
 ]
