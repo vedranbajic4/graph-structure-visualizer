@@ -1,0 +1,83 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    color: #1f2937;
+}
+
+.page-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.page-header h1 {
+    margin: 0 0 16px;
+    font-size: 24px;
+}
+
+.workspace-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: 180px 1fr;
+    gap: 12px;
+    min-height: calc(100vh - 110px);
+}
+
+.panel {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.panel h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.tree-view {
+    grid-row: 1 / span 2;
+}
+
+.tree-list {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.tree-list ul {
+    margin-top: 6px;
+    padding-left: 18px;
+}
+
+.placeholder-box {
+    height: calc(100% - 26px);
+    min-height: 90px;
+    border: 1px dashed #9ca3af;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    background: #f9fafb;
+}
+
+.main-view .placeholder-box {
+    min-height: 320px;
+}
+
+@media (max-width: 900px) {
+    .workspace-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        min-height: auto;
+    }
+
+    .tree-view {
+        grid-row: auto;
+    }
+}
