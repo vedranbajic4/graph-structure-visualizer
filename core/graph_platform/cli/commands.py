@@ -432,7 +432,15 @@ class FilterCommand(Command):
         from core.services.filter_service import FilterService
         try:
             svc = FilterService()
-            result_graph = svc.filter(graph, self._query)
+
+            # Support compound filters with && (AND) per SPECS §2.1.5
+            # e.g.  filter 'Age>30 && Height>=150'
+            conditions = [c.strip() for c in self._query.split('&&')]
+            result_graph = graph
+            for condition in conditions:
+                if condition:
+                    result_graph = svc.filter(result_graph, condition)
+
             return CommandResult(
                 True,
                 f"Filter '{self._query}' applied: "
@@ -664,9 +672,10 @@ Available commands:
   delete edge --id=<id>
       Delete an edge.
 
-  filter '<attribute> <operator> <value>'
+  filter '<attribute> <operator> <value> [&& ...]'
       Filter graph nodes. Operators: ==, !=, >, >=, <, <=
-      Example: filter Age >= 30
+      Use && for compound filters.
+      Example: filter 'Age>30 && Height>=150'
 
   search '<query>'
       Search by attribute name or value.
