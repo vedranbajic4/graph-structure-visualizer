@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Graph>
+  <!-- Person[1] = Alice -->
+  <Person>
+    <name>Alice</name>
+    <role>Engineer</role>
+    <!-- Alice knows Person[2] (Bob) -->
+    <knows>
+      <Person reference="/Graph/Person[2]"/>
+    </knows>
+    <!-- Alice works for Organization[1] -->
+    <works_for>
+      <Organization reference="/Graph/Organization[1]"/>
+    </works_for>
+  </Person>
+
+  <!-- Person[2] = Bob -->
+  <Person>
+    <!-- Demonstrate element attributes (lang="en") -> should become edge attribute on attr edge -->
+    <name lang="en">Bob</name>
+    <role>Designer</role>
+    <works_for>
+      <Organization reference="/Graph/Organization[1]"/>
+    </works_for>
+  </Person>
+
+  <!-- Person[3] = Carol -->
+  <Person>
+    <name>Carol</name>
+    <role>Manager</role>
+    <!-- Carol manages Alice and Bob -->
+    <manages>
+      <Person reference="/Graph/Person[1]"/>
+    </manages>
+    <manages>
+      <Person reference="/Graph/Person[2]"/>
+    </manages>
+  </Person>
+
+  <!-- Person[4] = Dave -->
+  <Person>
+    <name>Dave</name>
+    <role>Engineer</role>
+  </Person>
+
+  <!-- Organization[1] = TechCorp -->
+  <Organization>
+    <name>TechCorp</name>
+  </Organization>
+</Graph>

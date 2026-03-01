@@ -7,9 +7,9 @@
 import re
 from typing import Set
 
-from api.api.models.graph import Graph
-from api.api.models.node import Node
-from api.api.types import TypeValidator
+from api.models.graph import Graph
+from api.models.node import Node
+from api.types import TypeValidator
 from .base_service import GraphQueryService
 from .exceptions import FilterParseError, FilterTypeError
 

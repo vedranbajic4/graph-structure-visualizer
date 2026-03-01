@@ -17,10 +17,10 @@ import logging
 from copy import deepcopy
 from typing import List, Optional
 
-from api.api.models.graph import Graph
+from api.models.graph import Graph
 
-from core.services.filter_service import FilterService
-from core.services.search_service import SearchService
+from services.filter_service import FilterService
+from services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,13 @@
 # tests/core_test/test_filter_service.py
 
 import pytest
-from core.services.filter_service import FilterService
-from core.services.exceptions import FilterParseError, FilterTypeError
-from tests.conftest import ConcreteNode
+from services.filter_service import FilterService
+from services.exceptions import FilterParseError, FilterTypeError
+from api.models.node import Node
 
+class ConcreteNode(Node):
+    """Minimal concrete Node for testing purposes."""
+    pass
 
 @pytest.fixture
 def service():
@@ -125,7 +128,7 @@ class TestSuccessiveApplication:
 
     def test_search_then_filter(self, service, stub_graph):
         """SearchService produces a subgraph; FilterService must accept it."""
-        from core.services.search_service import SearchService
+        from services.search_service import SearchService
 
         search = SearchService()
         g2 = search.search(stub_graph, "City")       # all nodes have City
@@ -136,7 +139,7 @@ class TestSuccessiveApplication:
 
     def test_filter_then_search(self, service, stub_graph):
         """FilterService output must be accepted by SearchService."""
-        from core.services.search_service import SearchService
+        from services.search_service import SearchService
 
         g2 = service.filter(stub_graph, "City == Berlin")
         assert set(g2.nodes.keys()) == {"n4", "n7", "n12"}

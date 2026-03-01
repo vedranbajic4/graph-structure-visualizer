@@ -2,11 +2,11 @@ from rdflib import Graph as RDFGraph, URIRef, Literal
 from rdflib.namespace import RDF
 
 
-from api.api.plugins import DataSourcePlugin
+from api.plugins import DataSourcePlugin
 
-from api.api.models.graph import Graph
-from api.api.models.edge import Edge, EdgeDirection
-from api.api.models.node import Node
+from api.models.graph import Graph
+from api.models.edge import Edge, EdgeDirection
+from api.models.node import Node
 
 class RDFNode(Node):
     """Concrete Node implementation for RDF-sourced data."""

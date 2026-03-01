@@ -38,9 +38,9 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from api.api.models.graph import Graph
-from api.api.models.node import Node
-from api.api.models.edge import Edge, EdgeDirection
+from api.models.graph import Graph
+from api.models.node import Node
+from api.models.edge import Edge, EdgeDirection
 
 
 # ── Concrete Node for CLI-created nodes ──────────────────────────
@@ -429,7 +429,7 @@ class FilterCommand(Command):
         self._query = query
 
     def execute(self, graph: Graph) -> CommandResult:
-        from core.services.filter_service import FilterService
+        from services.filter_service import FilterService
         try:
             svc = FilterService()
 
@@ -465,7 +465,7 @@ class SearchCommand(Command):
         self._query = query
 
     def execute(self, graph: Graph) -> CommandResult:
-        from core.services.search_service import SearchService
+        from services.search_service import SearchService
         try:
             svc = SearchService()
             result_graph = svc.search(graph, self._query)

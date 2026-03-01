@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from data_source_plugin_rdf.data_source_plugin_rdf.plugin import RDFTurtleDataSourcePlugin
+from data_source_plugin_rdf.plugin import RDFTurtleDataSourcePlugin
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 

@@ -15,13 +15,16 @@ import pytest
 from copy import deepcopy
 from datetime import date
 
-from api.api.models.graph import Graph
-from api.api.models.node import Node
-from api.api.models.edge import Edge, EdgeDirection
+from api.models.graph import Graph
+from api.models.node import Node
+from api.models.edge import Edge, EdgeDirection
 
 # Re-use ConcreteNode from conftest
-from tests.conftest import ConcreteNode
+# from tests.conftest import ConcreteNode
 
+class ConcreteNode(Node):
+    """Minimal concrete Node for testing purposes."""
+    pass
 
 # ═════════════════════════════════════════════════════════════════
 #  FIXTURES

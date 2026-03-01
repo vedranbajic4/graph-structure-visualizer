@@ -17,7 +17,7 @@ import importlib.metadata
 import logging
 from typing import TypeVar, Generic, Type, Dict, List, Optional
 
-from api.api.plugins.base import DataSourcePlugin, VisualizerPlugin
+from api.plugins.base import DataSourcePlugin, VisualizerPlugin
 
 logger = logging.getLogger(__name__)
 

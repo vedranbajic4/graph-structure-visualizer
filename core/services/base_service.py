@@ -13,7 +13,7 @@
 """
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Set
-from api.api.models.graph import Graph
+from api.models.graph import Graph
 
 # Generic type variable for the query parameter
 TQuery = TypeVar('TQuery')

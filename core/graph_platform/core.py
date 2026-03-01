@@ -24,8 +24,8 @@
 import logging
 from typing import Dict, List, Optional, Callable, Any
 
-from api.api.models.graph import Graph
-from api.api.plugins.base import DataSourcePlugin, VisualizerPlugin
+from api.models.graph import Graph
+from api.plugins.base import DataSourcePlugin, VisualizerPlugin
 
 from .config import PlatformConfig, SerializationConfig
 from .workspace import Workspace
@@ -99,9 +99,9 @@ class GraphPlatform:
         self._active_workspace_id: Optional[str] = None
 
         # Services (imported here to avoid circular imports)
-        from core.services.filter_service import FilterService
-        from core.services.search_service import SearchService
-        from core.services.serialization_service import GraphSerializer
+        from services.filter_service import FilterService
+        from services.search_service import SearchService
+        from services.serialization_service import GraphSerializer
 
         self._filter_service = FilterService()
         self._search_service = SearchService()
