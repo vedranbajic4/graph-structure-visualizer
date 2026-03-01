@@ -18,7 +18,7 @@ import re
 import shlex
 from typing import List, Optional, Tuple, Dict, Any
 
-from api.api.models.graph import Graph
+from api.models.graph import Graph
 
 from .commands import (
     Command,

@@ -6,9 +6,9 @@ Mixed attribute types, all undirected edges, contains a cycle.
 """
 import pytest
 from datetime import date
-from api.api.models.graph import Graph
-from api.api.models.edge import Edge, EdgeDirection
-from api.api.models.node import Node
+from api.models.graph import Graph
+from api.models.edge import Edge, EdgeDirection
+from api.models.node import Node
 
 
 class ConcreteNode(Node):

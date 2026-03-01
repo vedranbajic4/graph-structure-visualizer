@@ -7,7 +7,7 @@
 import re
 from typing import Set
 
-from api.api.models.graph import Graph
+from api.models.graph import Graph
 from .base_service import GraphQueryService
 from .exceptions import SearchParseError
 

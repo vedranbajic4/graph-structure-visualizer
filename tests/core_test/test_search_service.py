@@ -1,7 +1,7 @@
 # tests/core_test/test_search_service.py
 import pytest
-from core.services.search_service import SearchService
-from core.services.exceptions import SearchParseError
+from services.search_service import SearchService
+from services.exceptions import SearchParseError
 # ── Search by attribute NAME ────────────────────────────────────
 
 def test_search_by_name_all_nodes_have_attribute(stub_graph):
@@ -36,7 +36,7 @@ def test_search_by_name_no_match(stub_graph):
 
 def test_search_by_name_returns_graph_instance(stub_graph):
     """Result must be a Graph instance, not None or a list."""
-    from api.api.models.graph import Graph
+    from api.models.graph import Graph
     result = SearchService().search(stub_graph, "Age")
     assert isinstance(result, Graph)
 

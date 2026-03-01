@@ -1,10 +1,10 @@
 import pytest
 from pathlib import Path
 
-from api.api.models.edge import EdgeDirection
-from api.api.models.graph import Graph
-from data_source_plugin_rdf.data_source_plugin_rdf.plugin import RDFTurtleDataSourcePlugin, RDFNode
-from api.api.plugins.base import DataSourcePlugin
+from api.models.edge import EdgeDirection
+from api.models.graph import Graph
+from data_source_plugin_rdf.plugin import RDFTurtleDataSourcePlugin, RDFNode
+from api.plugins.base import DataSourcePlugin
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

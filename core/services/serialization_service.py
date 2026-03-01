@@ -17,12 +17,12 @@ from copy import deepcopy
 from datetime import date, datetime
 from typing import Any, Dict, Optional, Type
 
-from api.api.models.graph import Graph
-from api.api.models.node import Node
-from api.api.models.edge import Edge, EdgeDirection
-from api.api.types import ValueType, TypeValidator
+from api.models.graph import Graph
+from api.models.node import Node
+from api.models.edge import Edge, EdgeDirection
+from api.types import ValueType, TypeValidator
 
-from core.graph_platform.config import SerializationConfig
+from graph_platform.config import SerializationConfig
 
 
 class _ConcreteNode(Node):
