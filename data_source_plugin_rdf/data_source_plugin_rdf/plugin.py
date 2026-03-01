@@ -33,7 +33,7 @@ class RDFTurtleDataSourcePlugin(DataSourcePlugin):
         for subject, predicate, obj in rdf_graph:
             if isinstance(subject, URIRef):
                 node_uris.add(str(subject))
-            if isinstance(obj, URIRef):
+            if isinstance(obj, URIRef) and predicate != RDF.type:
                 node_uris.add(str(obj))
 
         for uri in node_uris:
@@ -83,3 +83,34 @@ class RDFTurtleDataSourcePlugin(DataSourcePlugin):
                 key = self._local_name(str(predicate))
                 attributes[key] = str(obj)
         return attributes
+
+
+def print_test_data():
+    plugin = RDFTurtleDataSourcePlugin()
+    graph = plugin.parse("../../tests/plugin_test/fixtures/simple_graph1.ttl")
+
+    print(f"Plugin: {plugin.get_plugin_name()}")
+    print(repr(graph))
+    print()
+
+    print(f"=== NODES ({graph.get_number_of_nodes()}) ===")
+    for node in graph.get_all_nodes():
+        print(f"  ID    : {node.node_id}")
+        print(f"  Label : {node.get_attribute('label')}")
+        print(f"  Attrs : {node.get_all_attributes()}")
+        print()
+
+    print(f"=== EDGES ({graph.get_number_of_edges()}) ===")
+    for edge in graph.get_all_edges():
+        src_label = edge.source_node.get_attribute('label')
+        tgt_label = edge.target_node.get_attribute('label')
+        rel_label = edge.get_attribute('label')
+        print(f"  {src_label}  --[{rel_label}]-->  {tgt_label}")
+        print(f"  ID       : {edge.edge_id}")
+        print(f"  Predicate: {edge.get_attribute('predicate')}")
+        print(f"  Direction: {edge.direction.value}")
+        print()
+
+if __name__ == '__main__':
+    # print_test_data()
+    pass
