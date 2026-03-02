@@ -1,0 +1,41 @@
+{
+  "@id": "alice",
+  "name": "Alice",
+  "role": "Engineer",
+  "salary": 85000,
+  "hire_date": "2019-03-15",
+  "active": true,
+  "rating": 4.7,
+  "employer": {
+    "@id": "techcorp",
+    "name": "TechCorp",
+    "founded": 1998,
+    "industry": "Software"
+  },
+  "skills": [
+    { "@id": "skill_python", "name": "Python", "category": "technical" },
+    { "@id": "skill_docker", "name": "Docker", "category": "technical" }
+  ],
+  "colleagues": [
+    {
+      "@id": "bob",
+      "name": "Bob",
+      "role": "Designer",
+      "salary": 72000,
+      "active": true,
+      "rating": 3.9,
+      "employer": "techcorp",
+      "knows": "alice"
+    },
+    {
+      "@id": "carol",
+      "name": "Carol",
+      "role": "Manager",
+      "salary": 110000,
+      "active": true,
+      "rating": 4.2,
+      "employer": "techcorp",
+      "manages": ["alice", "bob"]
+    }
+  ]
+}
