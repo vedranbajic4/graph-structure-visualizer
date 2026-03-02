@@ -1,0 +1,20 @@
+{
+  "@id": "parent-001",
+  "name": "I'm parent",
+  "type": "Parent",
+  "children": [
+    {
+      "@id": "child-001",
+      "name": "I'm first child",
+      "type": "Child",
+      "parent": "parent-001"
+    },
+    {
+      "@id": "child-002",
+      "name": "I'm second child",
+      "type": "Child",
+      "parent": "parent-001",
+      "sibling": "child-001"
+    }
+  ]
+}
