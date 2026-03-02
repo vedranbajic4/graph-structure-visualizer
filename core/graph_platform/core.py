@@ -276,6 +276,40 @@ class GraphPlatform:
         """Return metadata dicts for all workspaces."""
         return [ws.to_dict() for ws in self._workspaces.values()]
 
+    # ── Workspace persistence ────────────────────────────────────
+
+    def save_workspace(self, directory: str,
+                       workspace_id: Optional[str] = None) -> str:
+        """
+        Save a workspace to disk for later resumption.
+
+        Args:
+            directory:    Target directory for the JSON file.
+            workspace_id: Workspace to save (defaults to active).
+
+        Returns:
+            Absolute path of the saved file.
+        """
+        ws = self._resolve_workspace(workspace_id)
+        return ws.save(directory)
+
+    def load_workspace(self, file_path: str) -> Workspace:
+        """
+        Load a workspace from a previously saved JSON file.
+
+        Args:
+            file_path: Path to the workspace JSON file.
+
+        Returns:
+            The restored and activated Workspace.
+        """
+        ws = Workspace.load(file_path)
+        self._workspaces[ws.workspace_id] = ws
+        self._active_workspace_id = ws.workspace_id
+        self._notify(EVENT_WORKSPACE_CREATED, workspace=ws)
+        logger.info("Workspace loaded from %s", file_path)
+        return ws
+
     # ── Graph operations on active workspace ─────────────────────
 
     def filter_graph(self, query: str,
