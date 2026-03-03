@@ -160,5 +160,446 @@
     <div id="status-bar" class="status-bar"></div>
 </div>
 
+{# ═══════════════════════════════════════════════════════════ #}
+{# JAVASCRIPT                                                 #}
+{# ═══════════════════════════════════════════════════════════ #}
+<script>
+/* ============================================================
+   Graph data embedded from server (for Tree View & Bird View)
+   ============================================================ */
+let GRAPH_DATA = {{ graph_data_json|safe }};
+
+/* ============================================================
+   AJAX helper
+   ============================================================ */
+async function api(url, body, isFormData) {
+    const opts = { method: 'POST', headers: {} };
+    opts.headers['X-CSRFToken'] = CSRF_TOKEN;
+    if (isFormData) {
+        opts.body = body;
+    } else {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body || {});
+    }
+    const res = await fetch(url, opts);
+    return res.json();
+}
+
+function showStatus(msg, isError) {
+    const bar = document.getElementById('status-bar');
+    bar.textContent = msg;
+    bar.className = 'status-bar ' + (isError ? 'status-error' : 'status-ok');
+    bar.style.display = 'block';
+    setTimeout(() => { bar.style.display = 'none'; }, 4000);
+}
+
+/* ============================================================
+   Update ALL panels after a server response
+   ============================================================ */
+function updatePanels(data) {
+    if (!data.success && data.error) {
+        showStatus(data.error, true);
+        return;
+    }
+
+    /* Main View */
+    const mc = document.getElementById('main-container');
+    if (data.graph_html !== undefined) {
+        mc.innerHTML = data.graph_html || '<div class="empty-state"><p>No graph loaded.</p></div>';
+    }
+
+    /* Graph data for Tree + Bird */
+    if (data.graph_data !== undefined) {
+        GRAPH_DATA = data.graph_data;
+    }
+
+    /* Workspace info */
+    if (data.workspace) {
+        const h2 = document.querySelector('#main-panel h2');
+        h2.innerHTML = 'Main View <span class="node-count">(' +
+            data.workspace.nodes + ' nodes, ' + data.workspace.edges + ' edges)</span>';
+    }
+
+    /* Workspace tabs */
+    if (data.workspaces) rebuildWorkspaceTabs(data.workspaces, data.workspace);
+
+    /* Re-render Tree View + Bird View */
+    renderTreeView();
+    renderBirdView();
+}
+
+/* ============================================================
+   Upload
+   ============================================================ */
+function toggleUpload() {
+    const p = document.getElementById('upload-panel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function handleUpload(e) {
+    e.preventDefault();
+    const form = document.getElementById('upload-form');
+    const fd = new FormData(form);
+    document.getElementById('upload-error').style.display = 'none';
+
+    const data = await api('/api/upload/', fd, true);
+    if (data.success) {
+        toggleUpload();
+        updatePanels(data);
+        showStatus('Graph loaded successfully.', false);
+    } else {
+        const err = document.getElementById('upload-error');
+        err.textContent = data.error;
+        err.style.display = 'block';
+    }
+    return false;
+}
+
+/* ============================================================
+   Visualizer switch
+   ============================================================ */
+async function switchVisualizer(name) {
+    const data = await api('/api/visualizer/', { visualizer: name });
+    updatePanels(data);
+}
+
+/* ============================================================
+   Search / Filter / Undo / Reset
+   ============================================================ */
+async function doSearch() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q) return;
+    const data = await api('/api/search/', { query: q });
+    updatePanels(data);
+    if (data.success) { document.getElementById('search-input').value = ''; showStatus('Search applied.', false); }
+}
+
+async function doFilter() {
+    const q = document.getElementById('filter-input').value.trim();
+    if (!q) return;
+    const data = await api('/api/filter/', { query: q });
+    updatePanels(data);
+    if (data.success) { document.getElementById('filter-input').value = ''; showStatus('Filter applied.', false); }
+}
+
+async function doUndo() {
+    const data = await api('/api/undo/', {});
+    updatePanels(data);
+    if (data.success) showStatus('Undo successful.', false);
+}
+
+async function doReset() {
+    const data = await api('/api/reset/', {});
+    updatePanels(data);
+    if (data.success) showStatus('Workspace reset to original graph.', false);
+}
+
+/* ============================================================
+   CLI
+   ============================================================ */
+async function doCli() {
+    const inp = document.getElementById('cli-input');
+    const cmd = inp.value.trim();
+    if (!cmd) return;
+
+    const data = await api('/api/cli/', { command: cmd });
+    inp.value = '';
+
+    /* Append output line */
+    const out = document.getElementById('cli-output');
+    const div = document.createElement('div');
+    div.className = 'cli-line ' + (data.success ? 'cli-ok' : 'cli-err');
+    div.innerHTML = '<span class="cli-prompt">&gt;</span> ' + escHTML(cmd) +
+        '<br><span class="cli-msg">' + escHTML(data.message || data.error || '') + '</span>';
+    out.appendChild(div);
+    out.scrollTop = out.scrollHeight;
+
+    updatePanels(data);
+}
+
+function escHTML(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ============================================================
+   Workspace management
+   ============================================================ */
+async function switchWorkspace(id) {
+    const data = await api('/api/workspace/switch/', { workspace_id: id });
+    updatePanels(data);
+}
+
+async function deleteWorkspace(id) {
+    const data = await api('/api/workspace/delete/', { workspace_id: id });
+    updatePanels(data);
+}
+
+function rebuildWorkspaceTabs(workspaces, activeWs) {
+    const cont = document.getElementById('workspace-tabs');
+    cont.innerHTML = '';
+    workspaces.forEach(ws => {
+        const btn = document.createElement('button');
+        btn.className = 'ws-tab' + (activeWs && ws.workspace_id === activeWs.workspace_id ? ' active' : '');
+        btn.dataset.wsId = ws.workspace_id;
+        btn.onclick = () => switchWorkspace(ws.workspace_id);
+        btn.innerHTML = ws.name.substring(0, 16) +
+            '<span class="ws-tab-close" onclick="event.stopPropagation(); deleteWorkspace(\'' +
+            ws.workspace_id + '\')">&times;</span>';
+        cont.appendChild(btn);
+    });
+}
+
+/* ============================================================
+   TREE VIEW — collapsible BFS tree from graph data
+   ============================================================ */
+function renderTreeView() {
+    const container = document.getElementById('tree-container');
+    container.innerHTML = '';
+
+    if (!GRAPH_DATA || !GRAPH_DATA.nodes || GRAPH_DATA.nodes.length === 0) {
+        container.innerHTML = '<p class="placeholder-text">No graph data.</p>';
+        return;
+    }
+
+    const nodes = GRAPH_DATA.nodes;
+    const edges = GRAPH_DATA.edges || [];
+
+    /* Build adjacency: source → [ {target, edgeId, label} ] */
+    const adj = {};
+    nodes.forEach(n => { adj[n.id] = []; });
+    edges.forEach(e => {
+        const src = (typeof e.source === 'object') ? e.source.id : e.source;
+        const tgt = (typeof e.target === 'object') ? e.target.id : e.target;
+        adj[src] = adj[src] || [];
+        adj[src].push({ target: tgt, label: e.attributes ? (e.attributes.label || '') : '' });
+        if (e.direction === 'undirected') {
+            adj[tgt] = adj[tgt] || [];
+            adj[tgt].push({ target: src, label: e.attributes ? (e.attributes.label || '') : '' });
+        }
+    });
+
+    /* Pick root = first node */
+    const rootId = nodes[0].id;
+    const nodeMap = {};
+    nodes.forEach(n => { nodeMap[n.id] = n; });
+
+    /* Build tree with BFS, cycle detection */
+    const ul = document.createElement('ul');
+    ul.className = 'tree-list';
+
+    function buildTreeNode(nodeId, visited) {
+        const li = document.createElement('li');
+        const n = nodeMap[nodeId];
+        if (!n) return li;
+
+        const children = (adj[nodeId] || []).filter(c => !visited.has(c.target));
+        const hasChildren = children.length > 0;
+
+        /* Toggle button */
+        const toggle = document.createElement('span');
+        toggle.className = 'tree-toggle';
+        toggle.textContent = hasChildren ? '+' : ' ';
+
+        /* Label */
+        const label = document.createElement('span');
+        label.className = 'tree-label';
+        const name = n.attributes ? (n.attributes.Name || n.attributes.name || n.attributes.label || n.id) : n.id;
+        label.textContent = name;
+        label.title = nodeId;
+
+        /* Click to select */
+        label.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.tree-label.selected').forEach(el => el.classList.remove('selected'));
+            label.classList.add('selected');
+            highlightNodeAllViews(nodeId);
+        };
+
+        li.appendChild(toggle);
+        li.appendChild(label);
+
+        /* Lazy expand */
+        if (hasChildren) {
+            let expanded = false;
+            let childUl = null;
+            toggle.onclick = (e) => {
+                e.stopPropagation();
+                if (!expanded) {
+                    childUl = document.createElement('ul');
+                    childUl.className = 'tree-list';
+                    const newVisited = new Set(visited);
+                    newVisited.add(nodeId);
+                    children.forEach(c => {
+                        newVisited.add(c.target);
+                    });
+                    const childVisited = new Set(visited);
+                    childVisited.add(nodeId);
+                    children.forEach(c => {
+                        childUl.appendChild(buildTreeNode(c.target, new Set(childVisited)));
+                        childVisited.add(c.target);
+                    });
+                    li.appendChild(childUl);
+                    toggle.textContent = '−';
+                    expanded = true;
+                } else {
+                    li.removeChild(childUl);
+                    toggle.textContent = '+';
+                    expanded = false;
+                }
+            };
+        }
+
+        return li;
+    }
+
+    const rootVisited = new Set();
+    rootVisited.add(rootId);
+    ul.appendChild(buildTreeNode(rootId, rootVisited));
+
+    /* Add disconnected nodes */
+    const reachable = new Set([rootId]);
+    const queue = [rootId];
+    while (queue.length) {
+        const cur = queue.shift();
+        (adj[cur] || []).forEach(c => {
+            if (!reachable.has(c.target)) {
+                reachable.add(c.target);
+                queue.push(c.target);
+            }
+        });
+    }
+    nodes.forEach(n => {
+        if (!reachable.has(n.id)) {
+            ul.appendChild(buildTreeNode(n.id, new Set()));
+        }
+    });
+
+    container.appendChild(ul);
+}
+
+/* ============================================================
+   BIRD VIEW — minimap with D3 force layout
+   ============================================================ */
+function renderBirdView() {
+    const container = document.getElementById('bird-container');
+    container.innerHTML = '';
+
+    if (!GRAPH_DATA || !GRAPH_DATA.nodes || GRAPH_DATA.nodes.length === 0) {
+        container.innerHTML = '<p class="placeholder-text">No graph data.</p>';
+        return;
+    }
+
+    const w = container.clientWidth || 280;
+    const h = container.clientHeight || 170;
+
+    /* Deep-copy data for independent simulation */
+    const nodes = GRAPH_DATA.nodes.map(n => ({ id: n.id, attributes: n.attributes }));
+    const edges = GRAPH_DATA.edges.map(e => ({
+        source: (typeof e.source === 'object') ? e.source.id : e.source,
+        target: (typeof e.target === 'object') ? e.target.id : e.target,
+        directed: e.direction === 'directed',
+    }));
+
+    const svg = d3.select(container).append('svg')
+        .attr('width', w).attr('height', h)
+        .attr('viewBox', [0, 0, w, h]);
+
+    const g = svg.append('g');
+
+    /* Marker */
+    svg.append('defs').append('marker')
+        .attr('id', 'bird-arrow').attr('viewBox', '0 -3 6 6')
+        .attr('refX', 8).attr('refY', 0).attr('markerWidth', 4).attr('markerHeight', 4)
+        .attr('orient', 'auto')
+        .append('path').attr('d', 'M0,-3L6,0L0,3').attr('fill', '#999');
+
+    const sim = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id(d => d.id).distance(30))
+        .force('charge', d3.forceManyBody().strength(-40))
+        .force('center', d3.forceCenter(w / 2, h / 2))
+        .force('collide', d3.forceCollide(6));
+
+    const link = g.selectAll('line').data(edges).join('line')
+        .attr('stroke', '#aaa').attr('stroke-width', 0.5)
+        .attr('marker-end', d => d.directed ? 'url(#bird-arrow)' : null);
+
+    const node = g.selectAll('circle').data(nodes).join('circle')
+        .attr('r', 3).attr('fill', '#3498db').attr('stroke', '#fff').attr('stroke-width', 0.5);
+
+    node.on('click', (e, d) => highlightNodeAllViews(d.id));
+
+    /* Viewport rectangle (tracks Main View zoom/pan) */
+    const viewport = g.append('rect')
+        .attr('class', 'bird-viewport')
+        .attr('fill', 'none').attr('stroke', '#e67e22').attr('stroke-width', 1.5)
+        .attr('rx', 2);
+
+    sim.on('tick', () => {
+        link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('cx', d => d.x).attr('cy', d => d.y);
+    });
+
+    /* After simulation settles, fit-to-view */
+    sim.on('end', () => {
+        const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+        const minX = Math.min(...xs) - 10, maxX = Math.max(...xs) + 10;
+        const minY = Math.min(...ys) - 10, maxY = Math.max(...ys) + 10;
+        const gw = maxX - minX || 1, gh = maxY - minY || 1;
+        const scale = Math.min(w / gw, h / gh) * 0.9;
+        const tx = (w - gw * scale) / 2 - minX * scale;
+        const ty = (h - gh * scale) / 2 - minY * scale;
+        g.attr('transform', `translate(${tx},${ty}) scale(${scale})`);
+
+        /* Default viewport = full view */
+        viewport.attr('x', minX).attr('y', minY).attr('width', gw).attr('height', gh);
+    });
+
+    /* Store references for viewport sync */
+    window._birdView = { svg, g, viewport, nodes, w, h };
+}
+
+/* ============================================================
+   Cross-view node selection sync (spec §2.1.1)
+   ============================================================ */
+function highlightNodeAllViews(nodeId) {
+    /* Main View: dispatch custom event that vis plugins listen for */
+    const mc = document.getElementById('main-container');
+    mc.dispatchEvent(new CustomEvent('node-selected', { detail: { nodeId: nodeId } }));
+
+    /* Also try to highlight circles/blocks directly via class */
+    mc.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+
+    /* Tree View: highlight matching label */
+    document.querySelectorAll('.tree-label').forEach(el => {
+        if (el.title === nodeId) el.classList.add('selected');
+        else el.classList.remove('selected');
+    });
+
+    /* Bird View: highlight matching circle */
+    if (window._birdView) {
+        const birdSvg = window._birdView.svg;
+        birdSvg.selectAll('circle')
+            .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
+            .attr('r', d => d.id === nodeId ? 5 : 3);
+    }
+}
+
+/* ============================================================
+   Keyboard shortcuts
+   ============================================================ */
+document.addEventListener('keydown', (e) => {
+    /* Enter in search or filter fields */
+    if (e.key === 'Enter' && e.target.id === 'search-input') doSearch();
+    if (e.key === 'Enter' && e.target.id === 'filter-input') doFilter();
+});
+
+/* ============================================================
+   Initial render of Tree + Bird views on page load
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    renderTreeView();
+    renderBirdView();
+});
+</script>
+
 </body>
 </html>
