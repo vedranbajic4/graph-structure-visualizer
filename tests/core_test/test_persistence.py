@@ -136,6 +136,7 @@ class TestWorkspaceLoad:
         file_path = ws1.save(str(tmp_path))
         ws2 = Workspace.load(file_path)
         n1 = ws2.current_graph.get_node("n1")
+        assert n1 is not None
         assert n1.get_attribute("Name") == "Alice"
         assert n1.get_attribute("Age") == 30
 
@@ -144,6 +145,7 @@ class TestWorkspaceLoad:
         file_path = ws1.save(str(tmp_path))
         ws2 = Workspace.load(file_path)
         n1 = ws2.current_graph.get_node("n1")
+        assert n1 is not None
         assert n1.get_attribute("Born") == date(1994, 3, 12)
 
     def test_load_restores_edge_direction(self, tmp_path):
@@ -152,6 +154,8 @@ class TestWorkspaceLoad:
         ws2 = Workspace.load(file_path)
         e1 = ws2.current_graph.get_edge("e1")
         e2 = ws2.current_graph.get_edge("e2")
+        assert e1 is not None
+        assert e2 is not None
         assert e1.is_directed() is True
         assert e2.is_directed() is False
 
