@@ -73,5 +73,50 @@
     <div id="upload-error" class="error-msg" style="display:none;"></div>
 </div>
 
+{# ═══════════════════════════════════════════════════════════ #}
+{# THREE-PANEL GRID                                           #}
+{# ═══════════════════════════════════════════════════════════ #}
+<div class="workspace-grid">
+
+    {# ── Tree View (left sidebar) ─────────────────────────── #}
+    <aside class="panel tree-view" id="tree-panel">
+        <h2>Tree View</h2>
+        <div id="tree-container" class="tree-container">
+            {% if not has_graph %}
+            <p class="placeholder-text">Load a graph to see the tree view.</p>
+            {% endif %}
+        </div>
+    </aside>
+
+    {# ── Bird View (top right) ────────────────────────────── #}
+    <section class="panel bird-view" id="bird-panel">
+        <h2>Bird View</h2>
+        <div id="bird-container" class="bird-container">
+            {% if not has_graph %}
+            <p class="placeholder-text">Minimap will appear here.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ── Main View (center right) ─────────────────────────── #}
+    <main class="panel main-view" id="main-panel">
+        <h2>Main View
+            {% if workspace %}
+            <span class="node-count">({{ workspace.nodes }} nodes, {{ workspace.edges }} edges)</span>
+            {% endif %}
+        </h2>
+        <div id="main-container" class="main-container">
+            {% if has_graph %}
+                {{ graph_html|safe }}
+            {% else %}
+                <div class="empty-state">
+                    <p>No graph loaded.</p>
+                    <p>Click <strong>+ Load Graph</strong> to get started.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
 </body>
 </html>

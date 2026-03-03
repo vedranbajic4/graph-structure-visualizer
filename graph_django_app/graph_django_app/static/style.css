@@ -1,7 +1,5 @@
 /* ============================================================
    Graph Explorer — complete stylesheet
-   Commit 1: Base reset, header, buttons, workspace tabs,
-             visualizer selector, upload panel
    ============================================================ */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -109,3 +107,84 @@ body {
 .upload-panel select { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
 .upload-panel input[type="file"] { font-size: 13px; }
 .error-msg { color: #e74c3c; font-size: 13px; }
+
+/* ── Three-panel grid ────────────────────────────────────── */
+
+.workspace-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 200px 1fr;
+    gap: 6px;
+    padding: 6px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.panel {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.panel h2 {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 10px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+.node-count { font-weight: 400; color: #6b7280; font-size: 12px; }
+
+/* Tree View */
+.tree-view { grid-row: 1 / span 2; overflow: hidden; }
+.tree-container { flex: 1; overflow: auto; padding: 6px; font-size: 13px; }
+
+.tree-list { list-style: none; padding-left: 16px; }
+.tree-list li { padding: 1px 0; }
+.tree-toggle {
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: #3498db;
+    user-select: none;
+}
+.tree-label {
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+.tree-label:hover { background: #ebf5fb; }
+.tree-label.selected { background: #3498db; color: #fff; }
+
+/* Bird View */
+.bird-view { overflow: hidden; }
+.bird-container { flex: 1; overflow: hidden; position: relative; }
+.bird-container svg { width: 100%; height: 100%; display: block; }
+
+/* Main View */
+.main-view { overflow: hidden; }
+.main-container { flex: 1; overflow: hidden; position: relative; }
+.main-container > div,
+.main-container > style + div { width: 100%; height: 100%; }
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #9ca3af;
+    font-size: 15px;
+    gap: 6px;
+}
+
+.placeholder-text { color: #9ca3af; font-size: 13px; padding: 10px; }
+
+/* Visualization error */
+.vis-error { color: #e74c3c; padding: 20px; text-align: center; }
