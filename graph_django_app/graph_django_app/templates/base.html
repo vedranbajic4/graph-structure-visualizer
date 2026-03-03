@@ -118,5 +118,47 @@
     </main>
 </div>
 
+{# ═══════════════════════════════════════════════════════════ #}
+{# BOTTOM TOOLBAR                                             #}
+{# ═══════════════════════════════════════════════════════════ #}
+<div class="bottom-toolbar">
+
+    {# ── Search & Filter row ──────────────────────────────── #}
+    <div class="sf-row">
+        <div class="sf-group">
+            <input type="text" id="search-input" placeholder="Search (contains)..." class="sf-input">
+            <button class="btn" onclick="doSearch()">&#128269; Search</button>
+        </div>
+        <div class="sf-group">
+            <input type="text" id="filter-input" placeholder="Filter: attr op value" class="sf-input">
+            <button class="btn" onclick="doFilter()">&#9654; Filter</button>
+        </div>
+        <div class="sf-group sf-actions">
+            <button class="btn" onclick="doUndo()" title="Undo last search/filter">&#8630; Undo</button>
+            <button class="btn btn-danger" onclick="doReset()" title="Reset to original graph">&#8635; Reset</button>
+        </div>
+    </div>
+
+    {# ── CLI terminal ─────────────────────────────────────── #}
+    <div class="cli-area">
+        <div class="cli-output" id="cli-output">
+            {% for entry in cli_output %}
+            <div class="cli-line {% if entry.success %}cli-ok{% else %}cli-err{% endif %}">
+                <span class="cli-prompt">&gt;</span> {{ entry.command }}
+                <br><span class="cli-msg">{{ entry.message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="cli-input-row">
+            <span class="cli-prompt">&gt;</span>
+            <input type="text" id="cli-input" placeholder="Type command... (type 'help' for usage)"
+                   onkeydown="if(event.key==='Enter') doCli()">
+            <button class="btn btn-sm" onclick="doCli()">&#9166;</button>
+        </div>
+    </div>
+
+    <div id="status-bar" class="status-bar"></div>
+</div>
+
 </body>
 </html>
