@@ -1,35 +1,21 @@
 """
-URL configuration for graph_django_app project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+URL configuration for the Graph Explorer Django application.
 """
-from django.contrib import admin
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
+    # ── Page ─────────────────────────────────────────────────────
     path('', views.index, name='index'),
-]
 
-''' Ovako dalje treba, ovo je primer sa vezbi
-    path('kategorije/', views.lista_kategorija, name='lista_kategorija'),
-    path('artikli/', artikli_view.lista_artikala, name='lista_artikala'),
-    path('brisanje/artikla/<int:id>', artikli_view.brisanje_artikla, name='brisanje_artikla'),
-    path('unos/artikla/', artikli_view.unos_artikla, name='unos_artikla'),
-    path('unos/artikla/<int:id>', artikli_view.unos_artikla, name='unos_artikla_p'),
-    path('prodavnice/', prodavnica_view.lista_prodavnica, name='lista_prodavnica'),
-    path('brisanje/prodavnice/<int:id>', prodavnica_view.brisanje_prodavnice, name='brisanje_prodavnice'),
-    path('unos/prodavnice/', prodavnica_view.unos_prodavnice, name='unos_prodavnice'),
-    path('unos/prodavnice/<int:id>', prodavnica_view.unos_prodavnice, name='unos_prodavnice_p'),'''
+    # ── AJAX endpoints ───────────────────────────────────────────
+    path('api/upload/', views.upload_file, name='upload_file'),
+    path('api/visualizer/', views.switch_visualizer, name='switch_visualizer'),
+    path('api/search/', views.search_graph, name='search_graph'),
+    path('api/filter/', views.filter_graph, name='filter_graph'),
+    path('api/undo/', views.undo_action, name='undo_action'),
+    path('api/reset/', views.reset_graph, name='reset_graph'),
+    path('api/cli/', views.cli_execute, name='cli_execute'),
+    path('api/workspace/switch/', views.switch_workspace, name='switch_workspace'),
+    path('api/workspace/delete/', views.delete_workspace, name='delete_workspace'),
+]
