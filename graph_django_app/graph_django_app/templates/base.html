@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Graph Explorer</title>
+</head>
+<body>
+
+{# ── CSRF token for AJAX ─────────────────────────────────── #}
+<script>const CSRF_TOKEN = '{{ csrf_token }}';</script>
+
+{# ═══════════════════════════════════════════════════════════ #}
+{# HEADER                                                      #}
+{# ═══════════════════════════════════════════════════════════ #}
+<header class="app-header">
+    <h1 class="app-title">Graph Explorer</h1>
+
+    <div class="header-controls">
+
+        {# ── Upload section ──────────────────────────────── #}
+        <button id="upload-toggle-btn" class="btn btn-primary" onclick="toggleUpload()">
+            &#43; Load Graph
+        </button>
+
+        {# ── Workspace tabs ──────────────────────────────── #}
+        <div class="workspace-tabs" id="workspace-tabs">
+            {% for ws in workspaces %}
+            <button class="ws-tab {% if ws.workspace_id == active_workspace_id %}active{% endif %}"
+                    data-ws-id="{{ ws.workspace_id }}"
+                    onclick="switchWorkspace('{{ ws.workspace_id }}')">
+                {{ ws.name|truncatechars:16 }}
+                <span class="ws-tab-close" onclick="event.stopPropagation(); deleteWorkspace('{{ ws.workspace_id }}')">
+                    &times;
+                </span>
+            </button>
+            {% endfor %}
+        </div>
+
+        {# ── Visualizer selector ─────────────────────────── #}
+        <label class="vis-label" for="vis-select">Visualizer:</label>
+        <select id="vis-select" onchange="switchVisualizer(this.value)">
+            {% for v in visualizers %}
+            <option value="{{ v }}" {% if v == active_visualizer %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</header>
+
+{# ── Upload panel (hidden by default) ───────────────────── #}
+<div class="upload-panel" id="upload-panel" style="display:none;">
+    <form id="upload-form" enctype="multipart/form-data" onsubmit="return handleUpload(event)">
+        <label for="upload-plugin">Data Source:</label>
+        <select id="upload-plugin" name="plugin_name" required>
+            <option value="">-- Select --</option>
+            {% for ds in data_sources %}
+            <option value="{{ ds }}">{{ ds }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="upload-file">File:</label>
+        <input type="file" id="upload-file" name="file" required>
+
+        <label for="upload-name">Workspace name (optional):</label>
+        <input type="text" id="upload-name" name="workspace_name" placeholder="My Graph">
+
+        <button type="submit" class="btn btn-primary">Load</button>
+        <button type="button" class="btn" onclick="toggleUpload()">Cancel</button>
+    </form>
+    <div id="upload-error" class="error-msg" style="display:none;"></div>
+</div>
+
+</body>
+</html>

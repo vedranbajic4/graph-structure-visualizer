@@ -1,0 +1,111 @@
+/* ============================================================
+   Graph Explorer — complete stylesheet
+   Commit 1: Base reset, header, buttons, workspace tabs,
+             visualizer selector, upload panel
+   ============================================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #eef1f5;
+    color: #1f2937;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: #2c3e50;
+    color: #fff;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.app-title { font-size: 18px; font-weight: 700; white-space: nowrap; }
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.btn {
+    padding: 5px 12px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.btn:hover { background: #ecf0f1; }
+.btn-primary { background: #3498db; border-color: #2980b9; color: #fff; }
+.btn-primary:hover { background: #2980b9; }
+.btn-danger  { background: #e74c3c; border-color: #c0392b; color: #fff; }
+.btn-danger:hover  { background: #c0392b; }
+.btn-sm { padding: 3px 8px; font-size: 12px; }
+
+/* ── Workspace tabs ──────────────────────────────────────── */
+
+.workspace-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.ws-tab {
+    padding: 4px 12px;
+    border: 1px solid #7f8c8d;
+    border-radius: 4px 4px 0 0;
+    background: #34495e;
+    color: #bdc3c7;
+    cursor: pointer;
+    font-size: 12px;
+    position: relative;
+}
+.ws-tab.active { background: #fff; color: #2c3e50; border-bottom-color: #fff; }
+.ws-tab-close {
+    margin-left: 6px;
+    font-weight: bold;
+    opacity: 0.5;
+}
+.ws-tab-close:hover { opacity: 1; color: #e74c3c; }
+
+/* ── Visualizer selector ─────────────────────────────────── */
+
+.vis-label { font-size: 13px; color: #bdc3c7; }
+#vis-select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #7f8c8d;
+    font-size: 13px;
+}
+
+/* ── Upload panel ────────────────────────────────────────── */
+
+.upload-panel {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fefefe;
+    border-bottom: 2px solid #3498db;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.upload-panel label { font-size: 13px; font-weight: 600; }
+.upload-panel input[type="text"],
+.upload-panel select { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+.upload-panel input[type="file"] { font-size: 13px; }
+.error-msg { color: #e74c3c; font-size: 13px; }
