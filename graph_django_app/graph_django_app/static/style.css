@@ -113,7 +113,7 @@ body {
 .workspace-grid {
     display: grid;
     grid-template-columns: 280px 1fr;
-    grid-template-rows: 200px 1fr;
+    grid-template-rows: 1fr 180px;
     gap: 6px;
     padding: 6px;
     flex: 1;
@@ -139,8 +139,12 @@ body {
 }
 .node-count { font-weight: 400; color: #6b7280; font-size: 12px; }
 
-/* Tree View */
-.tree-view { grid-row: 1 / span 2; overflow: hidden; }
+/* Tree View — top left */
+.tree-view {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    overflow: hidden;
+}
 .tree-container { flex: 1; overflow: auto; padding: 6px; font-size: 13px; }
 
 .tree-list { list-style: none; padding-left: 16px; }
@@ -162,13 +166,21 @@ body {
 .tree-label:hover { background: #ebf5fb; }
 .tree-label.selected { background: #3498db; color: #fff; }
 
-/* Bird View */
-.bird-view { overflow: hidden; }
+/* Bird View — bottom left */
+.bird-view {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    overflow: hidden;
+}
 .bird-container { flex: 1; overflow: hidden; position: relative; }
 .bird-container svg { width: 100%; height: 100%; display: block; }
 
-/* Main View */
-.main-view { overflow: hidden; }
+/* Main View — full right column */
+.main-view {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    overflow: hidden;
+}
 .main-container { flex: 1; overflow: hidden; position: relative; }
 .main-container > div,
 .main-container > style + div { width: 100%; height: 100%; }
@@ -272,8 +284,19 @@ body {
 @media (max-width: 900px) {
     .workspace-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: 120px 160px 1fr;
+        grid-template-rows: 1fr 120px 1fr;
     }
-    .tree-view { grid-row: auto; }
+    .tree-view {
+        grid-column: 1 / -1;
+        grid-row: 1 / 2;
+    }
+    .bird-view {
+        grid-column: 1 / -1;
+        grid-row: 2 / 3;
+    }
+    .main-view {
+        grid-column: 1 / -1;
+        grid-row: 3 / 4;
+    }
     .sf-input { width: 140px; }
 }
