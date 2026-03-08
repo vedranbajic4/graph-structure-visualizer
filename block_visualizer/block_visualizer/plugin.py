@@ -215,10 +215,32 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     const g = svg.append('g');
 
-    svg.call(d3.zoom()
+    const zoomBehavior = d3.zoom()
         .scaleExtent([0.1, 8])
-        .on('zoom', (event) => g.attr('transform', event.transform))
-    );
+        .on('zoom', (event) => {{
+            g.attr('transform', event.transform);
+            const t = event.transform;
+            document.dispatchEvent(new CustomEvent('sv-positions', {{
+                detail: {{
+                    positions: nodesData.map((n, i) => ({{ id: n.id, x: n.x || 0, y: n.y || 0, width: n.width || 0, height: n.height || 0, label: n.label, colorIndex: i }})),
+                    edges: edgesData,
+                    mainTransform: {{ k: t.k, x: t.x, y: t.y }},
+                    viewWidth: width,
+                    viewHeight: height,
+                }}
+            }}));
+        }});
+    svg.call(zoomBehavior);
+
+    /* ── Listen for bird-navigate ── */
+    document.addEventListener('bird-navigate', (e) => {{
+        const {{ graphX, graphY }} = e.detail;
+        const currentT = d3.zoomTransform(svg.node());
+        const newT = d3.zoomIdentity
+            .translate(width / 2 - graphX * currentT.k, height / 2 - graphY * currentT.k)
+            .scale(currentT.k);
+        svg.transition().duration(300).call(zoomBehavior.transform, newT);
+    }});
 
     /* ── Arrow marker for directed edges ─────────────── */
     svg.append('defs').append('marker')
@@ -372,6 +394,17 @@ class BlockVisualizerPlugin(VisualizerPlugin):
         .attr('y2', d => d.target.y - (d.target.height || 0) / 2);
 
       node.attr('transform', d => `translate(${{d.x}},${{d.y}})`);
+
+      const t = d3.zoomTransform(svg.node());
+      document.dispatchEvent(new CustomEvent('sv-positions', {{
+        detail: {{
+          positions: nodesData.map((n, i) => ({{ id: n.id, x: n.x || 0, y: n.y || 0, width: n.width || 0, height: n.height || 0, label: n.label, colorIndex: i }})),
+          edges: edgesData,
+          mainTransform: {{ k: t.k, x: t.x, y: t.y }},
+          viewWidth: width,
+          viewHeight: height,
+        }}
+      }}));
     }});
 
 

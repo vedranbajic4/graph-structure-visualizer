@@ -189,10 +189,32 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
 
     const g = svg.append('g');
 
-    svg.call(d3.zoom()
+    const zoomBehavior = d3.zoom()
         .scaleExtent([0.1, 8])
-        .on('zoom', (event) => g.attr('transform', event.transform))
-    );
+        .on('zoom', (event) => {{
+            g.attr('transform', event.transform);
+            const t = event.transform;
+            document.dispatchEvent(new CustomEvent('sv-positions', {{
+                detail: {{
+                    positions: nodesData.map(n => ({{ id: n.id, x: n.x || 0, y: n.y || 0 }})),
+                    edges: edgesData,
+                    mainTransform: {{ k: t.k, x: t.x, y: t.y }},
+                    viewWidth: width,
+                    viewHeight: height,
+                }}
+            }}));
+        }});
+    svg.call(zoomBehavior);
+
+    /* ── Listen for bird-navigate: pan to graph point ── */
+    document.addEventListener('bird-navigate', (e) => {{
+        const {{ graphX, graphY }} = e.detail;
+        const currentT = d3.zoomTransform(svg.node());
+        const newT = d3.zoomIdentity
+            .translate(width / 2 - graphX * currentT.k, height / 2 - graphY * currentT.k)
+            .scale(currentT.k);
+        svg.transition().duration(300).call(zoomBehavior.transform, newT);
+    }});
 
     /* ── Arrow markers ───────────────────────────────── */
     const defs = svg.append('defs');
@@ -404,6 +426,19 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
             const p = tipPos(td);
             return `translate(${{p.x}},${{p.y}})`;
         }});
+
+        /* Emit live node positions + zoom transform to bird view */
+        const positions = nodesData.map(n => ({{ id: n.id, x: n.x, y: n.y }}));
+        const t = d3.zoomTransform(svg.node());
+        document.dispatchEvent(new CustomEvent('sv-positions', {{
+            detail: {{
+                positions,
+                edges: edgesData,
+                mainTransform: {{ k: t.k, x: t.x, y: t.y }},
+                viewWidth: width,
+                viewHeight: height,
+            }}
+        }}));
     }});
 
     /* ── Drag handlers ───────────────────────────────── */
