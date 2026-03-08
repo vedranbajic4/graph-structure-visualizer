@@ -226,6 +226,7 @@ function updatePanels(data) {
     /* Re-render Tree View + Bird View */
     renderTreeView();
     renderBirdView();
+    attachMainViewNodeClicks();
 }
 
 /* ============================================================
@@ -660,16 +661,34 @@ function renderBirdView() {
 /* ============================================================
    Cross-view node selection sync
    ============================================================ */
+
+/* Build a map: display label → nodeId, from GRAPH_DATA */
+function buildLabelToIdMap() {
+    const map = {};
+    if (!GRAPH_DATA || !GRAPH_DATA.nodes) return map;
+    GRAPH_DATA.nodes.forEach(n => {
+        const label = n.attributes
+            ? (n.attributes.Name || n.attributes.name || n.attributes.label || n.id)
+            : n.id;
+        map[label] = n.id;
+    });
+    return map;
+}
+
 function highlightNodeAllViews(nodeId) {
-    /* Main View */
-    const mc = document.getElementById('main-container');
-    mc.dispatchEvent(new CustomEvent('node-selected', { detail: { nodeId: nodeId } }));
-    mc.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+    const labelToId = buildLabelToIdMap();
+
+    /* Main View — find circle whose sibling .sv-label text maps to nodeId */
+    document.querySelectorAll('.sv-node-circle').forEach(circle => {
+        const labelEl = circle.parentElement.querySelector('.sv-label');
+        if (!labelEl) return;
+        const id = labelToId[labelEl.textContent.trim()];
+        circle.classList.toggle('selected', id === nodeId);
+    });
 
     /* Tree View */
     document.querySelectorAll('.tree-label').forEach(el => {
-        if (el.title === nodeId) el.classList.add('selected');
-        else el.classList.remove('selected');
+        el.classList.toggle('selected', el.title === nodeId);
     });
 
     /* Bird View */
@@ -680,6 +699,31 @@ function highlightNodeAllViews(nodeId) {
     }
 }
 
+/* Attach click listeners to main view circles after render */
+function attachMainViewNodeClicks() {
+    const labelToId = buildLabelToIdMap();
+    document.querySelectorAll('.sv-node-circle').forEach(circle => {
+        const g = circle.parentElement;
+        const labelEl = g.querySelector('.sv-label');
+        if (!labelEl) return;
+        const nodeId = labelToId[labelEl.textContent.trim()];
+        if (!nodeId) return;
+        g.style.cursor = 'pointer';
+        g.addEventListener('click', (e) => {
+            e.stopPropagation();
+            highlightNodeAllViews(nodeId);
+        });
+    });
+}
+
+/* ============================================================
+   Initial render of Tree + Bird views on page load
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    renderTreeView();
+    renderBirdView();
+    attachMainViewNodeClicks(); // attach after main view is already in DOM
+});
 /* ============================================================
    Keyboard shortcuts
    ============================================================ */
