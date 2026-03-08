@@ -83,6 +83,7 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
                 "source": edge.source_node.node_id,
                 "target": edge.target_node.node_id,
                 "directed": edge.is_directed(),
+                "label": _safe_str(edge.get_attribute("label")) if edge.get_attribute("label") else "",
                 "attributes": attrs,
             })
         return edges
@@ -139,6 +140,15 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
 .simple-vis-container .sv-arrow {{
     fill: #999;
 }}
+.simple-vis-container .sv-edge-label {{
+    font: 10px sans-serif;
+    fill: #555;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+    background: white;
+}}
 .sv-tooltip {{
     position: absolute;
     padding: 8px 12px;
@@ -184,33 +194,135 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         .on('zoom', (event) => g.attr('transform', event.transform))
     );
 
-    /* ── Arrow marker for directed edges ─────────────── */
-    svg.append('defs').append('marker')
-        .attr('id', 'sv-arrowhead')
+    /* ── Arrow markers ───────────────────────────────── */
+    const defs = svg.append('defs');
+    // Forward arrowhead (marker-end)
+    defs.append('marker')
+        .attr('id', 'sv-arrow-end')
         .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 22)
-        .attr('refY', 0)
-        .attr('markerWidth', 8)
-        .attr('markerHeight', 8)
+        .attr('refX', 10).attr('refY', 0)
+        .attr('markerWidth', 6).attr('markerHeight', 6)
         .attr('orient', 'auto')
-        .append('path')
-        .attr('d', 'M0,-5L10,0L0,5')
-        .attr('class', 'sv-arrow');
+        .append('path').attr('d', 'M0,-5L10,0L0,5').attr('class', 'sv-arrow');
+    // Reverse arrowhead (marker-start) — points back toward source
+    defs.append('marker')
+        .attr('id', 'sv-arrow-start')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 10).attr('refY', 0)
+        .attr('markerWidth', 6).attr('markerHeight', 6)
+        .attr('orient', 'auto-start-reverse')
+        .append('path').attr('d', 'M0,-5L10,0L0,5').attr('class', 'sv-arrow');
 
-    /* ── Force simulation ────────────────────────────── */
+    /* ── Merge bidirectional edge pairs into one visual line ── */
+    // Build a map: canonical-key → [ edgeA, edgeB? ]
+    const edgeMap = new Map();
+    edgesData.forEach(e => {{
+        const ids = [e.source, e.target].sort();
+        const key = ids.join('|');
+        if (!edgeMap.has(key)) edgeMap.set(key, []);
+        edgeMap.get(key).push(e);
+    }});
+
+    // lineData: one entry per unique node pair, carries both edge refs
+    const lineData = [];
+    edgeMap.forEach(group => {{
+        // group[0] is always the "forward" edge, group[1] the reverse (if any)
+        lineData.push({{
+            key: group.map(e => e.id).join('+'),
+            fwd: group[0],                      // edge drawn source→target
+            rev: group[1] || null,              // edge drawn target→source (if bi)
+            sourceId: group[0].source,
+            targetId: group[0].target,
+        }});
+    }});
+
+    /* ── Force simulation — use original edgesData for physics ── */
     const simulation = d3.forceSimulation(nodesData)
-        .force('link', d3.forceLink(edgesData).id(d => d.id).distance(100))
+        .force('link', d3.forceLink(edgesData).id(d => d.id).distance(120))
         .force('charge', d3.forceManyBody().strength(-300))
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('collision', d3.forceCollide().radius(20));
 
-    /* ── Draw edges ──────────────────────────────────── */
+    const NODE_R = 10;
+
+    // Resolve a node ref (string id or object after simulation binds it)
+    function resolveNode(ref) {{
+        if (typeof ref === 'object') return ref;
+        return nodesData.find(n => n.id === ref);
+    }}
+
+    function lineCoords(ld) {{
+        const s = resolveNode(ld.fwd.source);
+        const t = resolveNode(ld.fwd.target);
+        if (!s || !t) return {{ x1:0,y1:0,x2:0,y2:0 }};
+        const dx = t.x - s.x, dy = t.y - s.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const off = NODE_R + 2;
+        return {{
+            x1: s.x + (dx/dist)*off,
+            y1: s.y + (dy/dist)*off,
+            x2: t.x - (dx/dist)*off,
+            y2: t.y - (dy/dist)*off,
+            s, t, dx, dy, dist,
+        }};
+    }}
+
+    /* ── Draw one line per node-pair ─────────────────── */
     const link = g.append('g')
         .selectAll('line')
-        .data(edgesData)
+        .data(lineData)
         .join('line')
         .attr('class', 'sv-link')
-        .attr('marker-end', d => d.directed ? 'url(#sv-arrowhead)' : null);
+        .attr('marker-end',   ld => ld.fwd.directed           ? 'url(#sv-arrow-end)'   : null)
+        .attr('marker-start', ld => ld.rev && ld.rev.directed ? 'url(#sv-arrow-start)' : null);
+
+    /* ── Label data: one entry per edge tip that has a label ── */
+    // Each tip is {{ edge, atTarget: true/false }}
+    const tipData = [];
+    lineData.forEach(ld => {{
+        if (ld.fwd.label) tipData.push({{ ld, edge: ld.fwd, atTarget: true  }});
+        if (ld.rev && ld.rev.label) tipData.push({{ ld, edge: ld.rev, atTarget: false }});
+    }});
+
+    /* ── Label groups, hidden by default ─────────────── */
+    const edgeLabelGroup = g.append('g').attr('class', 'sv-edge-labels');
+    const edgeLabelGs = edgeLabelGroup
+        .selectAll('g')
+        .data(tipData)
+        .join('g')
+        .style('opacity', 0)
+        .style('pointer-events', 'none');
+
+    edgeLabelGs.append('rect')
+        .attr('fill', 'rgba(255,255,255,0.92)')
+        .attr('rx', 3).attr('ry', 3)
+        .attr('height', 16).attr('y', -8)
+        .each(function(td) {{
+            const w = td.edge.label.length * 6.5 + 10;
+            d3.select(this).attr('width', w).attr('x', -w / 2);
+        }});
+
+    edgeLabelGs.append('text')
+        .attr('class', 'sv-edge-label')
+        .text(td => td.edge.label);
+
+    /* ── Hit zones: small transparent circles near each tip ── */
+    // Rendered after labels so they sit on top
+    const tipHit = g.append('g')
+        .selectAll('circle')
+        .data(tipData)
+        .join('circle')
+        .attr('r', 18)
+        .attr('fill', 'transparent')
+        .style('cursor', 'pointer')
+        .on('mouseover', function(event, td) {{
+            const idx = tipData.indexOf(td);
+            d3.select(edgeLabelGs.nodes()[idx]).style('opacity', 1);
+        }})
+        .on('mouseout', function(event, td) {{
+            const idx = tipData.indexOf(td);
+            d3.select(edgeLabelGs.nodes()[idx]).style('opacity', 0);
+        }});
 
     /* ── Draw nodes ──────────────────────────────────── */
     const node = g.append('g')
@@ -219,12 +331,12 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         .join('g')
         .call(d3.drag()
             .on('start', dragStarted)
-            .on('drag', dragged)
-            .on('end', dragEnded));
+            .on('drag',  dragged)
+            .on('end',   dragEnded));
 
     node.append('circle')
         .attr('class', 'sv-node-circle')
-        .attr('r', 10)
+        .attr('r', NODE_R)
         .attr('fill', (d, i) => color(i % 10));
 
     node.append('text')
@@ -232,7 +344,7 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         .attr('dy', -16)
         .text(d => d.label);
 
-    /* ── Tooltip ─────────────────────────────────────── */
+    /* ── Node tooltip ────────────────────────────────── */
     node.on('mouseover', function(event, d) {{
         let html = '<strong>' + d.label + '</strong> <em>(' + d.id + ')</em><br>';
         for (const [k, v] of Object.entries(d.attributes)) {{
@@ -246,26 +358,52 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         tooltip.style.left = (event.clientX - rect.left + 14) + 'px';
         tooltip.style.top  = (event.clientY - rect.top  - 10) + 'px';
     }})
-    .on('mouseout', function() {{
-        tooltip.style.opacity = 0;
-    }});
+    .on('mouseout', function() {{ tooltip.style.opacity = 0; }});
 
     /* ── Click-to-select ─────────────────────────────── */
     node.on('click', function(event, d) {{
         d3.selectAll('.sv-node-circle').classed('selected', false);
         d3.select(this).select('circle').classed('selected', true);
-        /* Dispatch custom event for cross-view sync */
         container.dispatchEvent(new CustomEvent('node-selected', {{ detail: {{ nodeId: d.id }} }}));
     }});
 
-    /* ── Tick ─────────────────────────────────────────── */
+    /* ── Tick ────────────────────────────────────────── */
     simulation.on('tick', () => {{
-        link
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-        node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+        // Update lines
+        link.each(function(ld) {{
+            const c = lineCoords(ld);
+            d3.select(this)
+                .attr('x1', c.x1).attr('y1', c.y1)
+                .attr('x2', c.x2).attr('y2', c.y2);
+        }});
+
+        node.attr('transform', d => `translate(${{d.x}},${{d.y}})`);
+
+        // Position each tip hit-circle and label near the right arrowhead
+        const TIP_BACK = NODE_R + 22; // px from the target node centre
+        function tipPos(td) {{
+            const c = lineCoords(td.ld);
+            if (!c.s) return {{x:0,y:0}};
+            if (td.atTarget) {{
+                // near the target end of fwd edge
+                return {{
+                    x: c.t.x - (c.dx/c.dist) * TIP_BACK,
+                    y: c.t.y - (c.dy/c.dist) * TIP_BACK,
+                }};
+            }} else {{
+                // near the source end (= reverse arrow tip)
+                return {{
+                    x: c.s.x + (c.dx/c.dist) * TIP_BACK,
+                    y: c.s.y + (c.dy/c.dist) * TIP_BACK,
+                }};
+            }}
+        }}
+
+        tipHit.attr('cx', td => tipPos(td).x).attr('cy', td => tipPos(td).y);
+        edgeLabelGs.attr('transform', td => {{
+            const p = tipPos(td);
+            return `translate(${{p.x}},${{p.y}})`;
+        }});
     }});
 
     /* ── Drag handlers ───────────────────────────────── */
