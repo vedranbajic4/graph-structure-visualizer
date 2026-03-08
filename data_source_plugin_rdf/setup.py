@@ -11,7 +11,7 @@ setup(
     ],
     entry_points={
         'graph_visualizer.data_source': [
-            'rdf_turtle = data_source_plugin_rdf_turtle.plugin:RDFTurtleDataSourcePlugin',
+            'rdf_turtle = data_source_plugin_rdf.plugin:RDFTurtleDataSourcePlugin',
         ],
     },
     python_requires='>=3.8',
