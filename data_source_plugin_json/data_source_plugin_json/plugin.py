@@ -159,7 +159,7 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         """
         attrs = {}
         for key, value in obj.items():
-            if key == "@id":
+            if key == "@id" or key == "id":
                 continue
             if isinstance(value, (dict, list)):
                 continue
