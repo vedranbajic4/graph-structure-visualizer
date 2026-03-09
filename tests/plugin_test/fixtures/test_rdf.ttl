@@ -1,0 +1,2322 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <http://example.org/technova/> .
+
+### Classes
+:Company rdf:type rdfs:Class .
+:Department rdf:type rdfs:Class .
+:Skill rdf:type rdfs:Class .
+:Project rdf:type rdfs:Class .
+:Person rdf:type rdfs:Class .
+
+### Properties
+:name rdf:type rdf:Property .
+:industry rdf:type rdf:Property .
+:location rdf:type rdf:Property .
+:founded rdf:type rdf:Property .
+:role rdf:type rdf:Property .
+:belongsTo rdf:type rdf:Property .
+:worksIn rdf:type rdf:Property .
+:hasSkill rdf:type rdf:Property .
+:worksOn rdf:type rdf:Property .
+:manages rdf:type rdf:Property .
+:departmentOf rdf:type rdf:Property .
+:employer rdf:type rdf:Property .
+
+### Company
+:company_1 rdf:type :Company ;
+    :name "SOK Testing" ;
+    :industry "Software" ;
+    :location "Belgrade" ;
+    :founded "2012"^^xsd:integer .
+
+### Departments
+:dept_1 rdf:type :Department ;
+    :name "Engineering" ;
+    :belongsTo :company_1 .
+
+:dept_2 rdf:type :Department ;
+    :name "Product" ;
+    :belongsTo :company_1 .
+
+:dept_3 rdf:type :Department ;
+    :name "Design" ;
+    :belongsTo :company_1 .
+
+:dept_4 rdf:type :Department ;
+    :name "QA" ;
+    :belongsTo :company_1 .
+
+:dept_5 rdf:type :Department ;
+    :name "DevOps" ;
+    :belongsTo :company_1 .
+
+:dept_6 rdf:type :Department ;
+    :name "Marketing" ;
+    :belongsTo :company_1 .
+
+:dept_7 rdf:type :Department ;
+    :name "Sales" ;
+    :belongsTo :company_1 .
+
+:dept_8 rdf:type :Department ;
+    :name "HR" ;
+    :belongsTo :company_1 .
+
+:dept_9 rdf:type :Department ;
+    :name "Finance" ;
+    :belongsTo :company_1 .
+
+:dept_10 rdf:type :Department ;
+    :name "Legal" ;
+    :belongsTo :company_1 .
+
+:dept_11 rdf:type :Department ;
+    :name "Customer Success" ;
+    :belongsTo :company_1 .
+
+:dept_12 rdf:type :Department ;
+    :name "Support" ;
+    :belongsTo :company_1 .
+
+:dept_13 rdf:type :Department ;
+    :name "Data" ;
+    :belongsTo :company_1 .
+
+:dept_14 rdf:type :Department ;
+    :name "AI Research" ;
+    :belongsTo :company_1 .
+
+:dept_15 rdf:type :Department ;
+    :name "Security" ;
+    :belongsTo :company_1 .
+
+:dept_16 rdf:type :Department ;
+    :name "Infrastructure" ;
+    :belongsTo :company_1 .
+
+:dept_17 rdf:type :Department ;
+    :name "Operations" ;
+    :belongsTo :company_1 .
+
+:dept_18 rdf:type :Department ;
+    :name "Strategy" ;
+    :belongsTo :company_1 .
+
+:dept_19 rdf:type :Department ;
+    :name "Analytics" ;
+    :belongsTo :company_1 .
+
+:dept_20 rdf:type :Department ;
+    :name "Mobile" ;
+    :belongsTo :company_1 .
+
+### Skills
+:skill_1 rdf:type :Skill ;
+    :name "Python" .
+
+:skill_2 rdf:type :Skill ;
+    :name "Java" .
+
+:skill_3 rdf:type :Skill ;
+    :name "C++" .
+
+:skill_4 rdf:type :Skill ;
+    :name "Go" .
+
+:skill_5 rdf:type :Skill ;
+    :name "JavaScript" .
+
+:skill_6 rdf:type :Skill ;
+    :name "TypeScript" .
+
+:skill_7 rdf:type :Skill ;
+    :name "React" .
+
+:skill_8 rdf:type :Skill ;
+    :name "Angular" .
+
+:skill_9 rdf:type :Skill ;
+    :name "Vue" .
+
+:skill_10 rdf:type :Skill ;
+    :name "Node.js" .
+
+:skill_11 rdf:type :Skill ;
+    :name "Docker" .
+
+:skill_12 rdf:type :Skill ;
+    :name "Kubernetes" .
+
+:skill_13 rdf:type :Skill ;
+    :name "AWS" .
+
+:skill_14 rdf:type :Skill ;
+    :name "Azure" .
+
+:skill_15 rdf:type :Skill ;
+    :name "GCP" .
+
+:skill_16 rdf:type :Skill ;
+    :name "Machine Learning" .
+
+:skill_17 rdf:type :Skill ;
+    :name "Data Science" .
+
+:skill_18 rdf:type :Skill ;
+    :name "SQL" .
+
+:skill_19 rdf:type :Skill ;
+    :name "NoSQL" .
+
+:skill_20 rdf:type :Skill ;
+    :name "GraphQL" .
+
+:skill_21 rdf:type :Skill ;
+    :name "Flutter" .
+
+:skill_22 rdf:type :Skill ;
+    :name "Android" .
+
+:skill_23 rdf:type :Skill ;
+    :name "iOS" .
+
+:skill_24 rdf:type :Skill ;
+    :name "UI/UX" .
+
+:skill_25 rdf:type :Skill ;
+    :name "Cybersecurity" .
+
+:skill_26 rdf:type :Skill ;
+    :name "DevOps" .
+
+:skill_27 rdf:type :Skill ;
+    :name "Testing" .
+
+:skill_28 rdf:type :Skill ;
+    :name "Project Management" .
+
+:skill_29 rdf:type :Skill ;
+    :name "Agile" .
+
+:skill_30 rdf:type :Skill ;
+    :name "Data Engineering" .
+
+### Projects
+:proj_1 rdf:type :Project ;
+    :name "Mobile Banking App" ;
+    :departmentOf :dept_20 .
+
+:proj_2 rdf:type :Project ;
+    :name "AI Recommendation Engine" ;
+    :departmentOf :dept_14 .
+
+:proj_3 rdf:type :Project ;
+    :name "Cloud Migration" ;
+    :departmentOf :dept_16 .
+
+:proj_4 rdf:type :Project ;
+    :name "Customer Analytics" ;
+    :departmentOf :dept_19 .
+
+:proj_5 rdf:type :Project ;
+    :name "Internal DevOps Platform" ;
+    :departmentOf :dept_5 .
+
+:proj_6 rdf:type :Project ;
+    :name "Fraud Detection AI" ;
+    :departmentOf :dept_14 .
+
+:proj_7 rdf:type :Project ;
+    :name "HR Automation" ;
+    :departmentOf :dept_8 .
+
+:proj_8 rdf:type :Project ;
+    :name "Sales CRM" ;
+    :departmentOf :dept_7 .
+
+:proj_9 rdf:type :Project ;
+    :name "Security Audit Platform" ;
+    :departmentOf :dept_15 .
+
+:proj_10 rdf:type :Project ;
+    :name "Infrastructure Monitoring" ;
+    :departmentOf :dept_16 .
+
+:proj_11 rdf:type :Project ;
+    :name "Customer Support Chatbot" ;
+    :departmentOf :dept_12 .
+
+:proj_12 rdf:type :Project ;
+    :name "Marketing Analytics" ;
+    :departmentOf :dept_6 .
+
+:proj_13 rdf:type :Project ;
+    :name "Payment Gateway" ;
+    :departmentOf :dept_1 .
+
+:proj_14 rdf:type :Project ;
+    :name "Blockchain Ledger" ;
+    :departmentOf :dept_1 .
+
+:proj_15 rdf:type :Project ;
+    :name "Log Aggregation System" ;
+    :departmentOf :dept_5 .
+
+:proj_16 rdf:type :Project ;
+    :name "Data Lake Platform" ;
+    :departmentOf :dept_13 .
+
+:proj_17 rdf:type :Project ;
+    :name "Predictive Maintenance" ;
+    :departmentOf :dept_14 .
+
+:proj_18 rdf:type :Project ;
+    :name "Inventory Optimizer" ;
+    :departmentOf :dept_13 .
+
+:proj_19 rdf:type :Project ;
+    :name "Mobile Wallet" ;
+    :departmentOf :dept_20 .
+
+:proj_20 rdf:type :Project ;
+    :name "AI Document Processing" ;
+    :departmentOf :dept_14 .
+
+:proj_21 rdf:type :Project ;
+    :name "Fraud Risk Dashboard" ;
+    :departmentOf :dept_19 .
+
+:proj_22 rdf:type :Project ;
+    :name "Customer Loyalty System" ;
+    :departmentOf :dept_11 .
+
+:proj_23 rdf:type :Project ;
+    :name "Supply Chain Tracker" ;
+    :departmentOf :dept_17 .
+
+:proj_24 rdf:type :Project ;
+    :name "Analytics API" ;
+    :departmentOf :dept_19 .
+
+:proj_25 rdf:type :Project ;
+    :name "Internal Wiki" ;
+    :departmentOf :dept_17 .
+
+:proj_26 rdf:type :Project ;
+    :name "Recommendation API" ;
+    :departmentOf :dept_14 .
+
+:proj_27 rdf:type :Project ;
+    :name "IoT Monitoring" ;
+    :departmentOf :dept_16 .
+
+:proj_28 rdf:type :Project ;
+    :name "Data Warehouse" ;
+    :departmentOf :dept_13 .
+
+:proj_29 rdf:type :Project ;
+    :name "Fraud Alert System" ;
+    :departmentOf :dept_15 .
+
+:proj_30 rdf:type :Project ;
+    :name "Search Engine" ;
+    :departmentOf :dept_1 .
+
+:proj_31 rdf:type :Project ;
+    :name "Realtime Chat Service" ;
+    :departmentOf :dept_1 .
+
+:proj_32 rdf:type :Project ;
+    :name "Mobile Delivery App" ;
+    :departmentOf :dept_20 .
+
+:proj_33 rdf:type :Project ;
+    :name "User Profile Service" ;
+    :departmentOf :dept_1 .
+
+:proj_34 rdf:type :Project ;
+    :name "A/B Testing Platform" ;
+    :departmentOf :dept_19 .
+
+:proj_35 rdf:type :Project ;
+    :name "Security Log Analyzer" ;
+    :departmentOf :dept_15 .
+
+:proj_36 rdf:type :Project ;
+    :name "Recruitment Platform" ;
+    :departmentOf :dept_8 .
+
+:proj_37 rdf:type :Project ;
+    :name "Content Recommendation" ;
+    :departmentOf :dept_14 .
+
+:proj_38 rdf:type :Project ;
+    :name "Customer Insights" ;
+    :departmentOf :dept_19 .
+
+:proj_39 rdf:type :Project ;
+    :name "Serverless Platform" ;
+    :departmentOf :dept_16 .
+
+:proj_40 rdf:type :Project ;
+    :name "Mobile Fitness Tracker" ;
+    :departmentOf :dept_20 .
+
+:proj_41 rdf:type :Project ;
+    :name "Voice Assistant AI" ;
+    :departmentOf :dept_14 .
+
+:proj_42 rdf:type :Project ;
+    :name "Security Compliance Tool" ;
+    :departmentOf :dept_15 .
+
+:proj_43 rdf:type :Project ;
+    :name "Cloud Cost Optimizer" ;
+    :departmentOf :dept_5 .
+
+:proj_44 rdf:type :Project ;
+    :name "Global CDN Manager" ;
+    :departmentOf :dept_16 .
+
+:proj_45 rdf:type :Project ;
+    :name "Fraud Pattern Detector" ;
+    :departmentOf :dept_14 .
+
+:proj_46 rdf:type :Project ;
+    :name "Realtime Analytics" ;
+    :departmentOf :dept_19 .
+
+:proj_47 rdf:type :Project ;
+    :name "Customer Engagement Platform" ;
+    :departmentOf :dept_11 .
+
+:proj_48 rdf:type :Project ;
+    :name "Mobile Ride Sharing" ;
+    :departmentOf :dept_20 .
+
+:proj_49 rdf:type :Project ;
+    :name "Smart Notification System" ;
+    :departmentOf :dept_1 .
+
+### People
+:emp_1 rdf:type :Person ;
+    :name "Employee 1" ;
+    :role "Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_2 .
+
+:emp_2 rdf:type :Person ;
+    :name "Employee 2" ;
+    :role "Analyst" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_3 ;
+    :worksOn :proj_10 .
+
+:emp_3 rdf:type :Person ;
+    :name "Employee 3" ;
+    :role "Designer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_4 .
+
+:emp_4 rdf:type :Person ;
+    :name "Employee 4" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_5 ;
+    :worksOn :proj_12 .
+
+:emp_5 rdf:type :Person ;
+    :name "Employee 5" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_6 .
+
+:emp_6 rdf:type :Person ;
+    :name "Employee 6" ;
+    :role "Manager" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_7 ;
+    :worksOn :proj_14 .
+
+:emp_7 rdf:type :Person ;
+    :name "Employee 7" ;
+    :role "Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_8 .
+
+:emp_8 rdf:type :Person ;
+    :name "Employee 8" ;
+    :role "Analyst" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_9 ;
+    :worksOn :proj_16 .
+
+:emp_9 rdf:type :Person ;
+    :name "Employee 9" ;
+    :role "Designer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_10 .
+
+:emp_10 rdf:type :Person ;
+    :name "Employee 10" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_11 ;
+    :worksOn :proj_18 .
+
+:emp_11 rdf:type :Person ;
+    :name "Employee 11" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_12 .
+
+:emp_12 rdf:type :Person ;
+    :name "Employee 12" ;
+    :role "Manager" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_13 ;
+    :worksOn :proj_20 .
+
+:emp_13 rdf:type :Person ;
+    :name "Employee 13" ;
+    :role "Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_14 .
+
+:emp_14 rdf:type :Person ;
+    :name "Employee 14" ;
+    :role "Analyst" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_15 ;
+    :worksOn :proj_22 .
+
+:emp_15 rdf:type :Person ;
+    :name "Employee 15" ;
+    :role "Designer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_16 .
+
+:emp_16 rdf:type :Person ;
+    :name "Employee 16" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_17 ;
+    :worksOn :proj_24 .
+
+:emp_17 rdf:type :Person ;
+    :name "Employee 17" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_18 .
+
+:emp_18 rdf:type :Person ;
+    :name "Employee 18" ;
+    :role "Manager" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_19 ;
+    :worksOn :proj_26 .
+
+:emp_19 rdf:type :Person ;
+    :name "Employee 19" ;
+    :role "Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_20 .
+
+:emp_20 rdf:type :Person ;
+    :name "Employee 20" ;
+    :role "Analyst" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_21 ;
+    :worksOn :proj_28 .
+
+:emp_21 rdf:type :Person ;
+    :name "Employee 21" ;
+    :role "Designer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_22 .
+
+:emp_22 rdf:type :Person ;
+    :name "Employee 22" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_23 ;
+    :worksOn :proj_30 .
+
+:emp_23 rdf:type :Person ;
+    :name "Employee 23" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_24 .
+
+:emp_24 rdf:type :Person ;
+    :name "Employee 24" ;
+    :role "Manager" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_25 ;
+    :worksOn :proj_32 .
+
+:emp_25 rdf:type :Person ;
+    :name "Employee 25" ;
+    :role "Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_26 .
+
+:emp_26 rdf:type :Person ;
+    :name "Employee 26" ;
+    :role "Analyst" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_27 ;
+    :worksOn :proj_34 .
+
+:emp_27 rdf:type :Person ;
+    :name "Employee 27" ;
+    :role "Designer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_28 .
+
+:emp_28 rdf:type :Person ;
+    :name "Employee 28" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_29 ;
+    :worksOn :proj_36 .
+
+:emp_29 rdf:type :Person ;
+    :name "Employee 29" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_30 .
+
+:emp_30 rdf:type :Person ;
+    :name "Employee 30" ;
+    :role "Manager" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_31 ;
+    :worksOn :proj_38 .
+
+:emp_31 rdf:type :Person ;
+    :name "Employee 31" ;
+    :role "Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_32 .
+
+:emp_32 rdf:type :Person ;
+    :name "Employee 32" ;
+    :role "Analyst" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_33 ;
+    :worksOn :proj_40 .
+
+:emp_33 rdf:type :Person ;
+    :name "Employee 33" ;
+    :role "Designer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_34 .
+
+:emp_34 rdf:type :Person ;
+    :name "Employee 34" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_35 ;
+    :worksOn :proj_42 .
+
+:emp_35 rdf:type :Person ;
+    :name "Employee 35" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_36 .
+
+:emp_36 rdf:type :Person ;
+    :name "Employee 36" ;
+    :role "Manager" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_37 ;
+    :worksOn :proj_44 .
+
+:emp_37 rdf:type :Person ;
+    :name "Employee 37" ;
+    :role "Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_38 .
+
+:emp_38 rdf:type :Person ;
+    :name "Employee 38" ;
+    :role "Analyst" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_39 ;
+    :worksOn :proj_46 .
+
+:emp_39 rdf:type :Person ;
+    :name "Employee 39" ;
+    :role "Designer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_40 .
+
+:emp_40 rdf:type :Person ;
+    :name "Employee 40" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_41 ;
+    :worksOn :proj_48 .
+
+:emp_41 rdf:type :Person ;
+    :name "Employee 41" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_42 .
+
+:emp_42 rdf:type :Person ;
+    :name "Employee 42" ;
+    :role "Manager" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_43 .
+
+:emp_43 rdf:type :Person ;
+    :name "Employee 43" ;
+    :role "Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_44 .
+
+:emp_44 rdf:type :Person ;
+    :name "Employee 44" ;
+    :role "Analyst" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_45 .
+
+:emp_45 rdf:type :Person ;
+    :name "Employee 45" ;
+    :role "Designer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_46 .
+
+:emp_46 rdf:type :Person ;
+    :name "Employee 46" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_47 .
+
+:emp_47 rdf:type :Person ;
+    :name "Employee 47" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_48 .
+
+:emp_48 rdf:type :Person ;
+    :name "Employee 48" ;
+    :role "Manager" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_49 .
+
+:emp_49 rdf:type :Person ;
+    :name "Employee 49" ;
+    :role "Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_1 .
+
+:emp_50 rdf:type :Person ;
+    :name "Employee 50" ;
+    :role "Analyst" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_2 .
+
+:emp_51 rdf:type :Person ;
+    :name "Employee 51" ;
+    :role "Designer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_3 .
+
+:emp_52 rdf:type :Person ;
+    :name "Employee 52" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_4 .
+
+:emp_53 rdf:type :Person ;
+    :name "Employee 53" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_5 .
+
+:emp_54 rdf:type :Person ;
+    :name "Employee 54" ;
+    :role "Manager" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_6 .
+
+:emp_55 rdf:type :Person ;
+    :name "Employee 55" ;
+    :role "Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_7 .
+
+:emp_56 rdf:type :Person ;
+    :name "Employee 56" ;
+    :role "Analyst" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_8 .
+
+:emp_57 rdf:type :Person ;
+    :name "Employee 57" ;
+    :role "Designer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_9 .
+
+:emp_58 rdf:type :Person ;
+    :name "Employee 58" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_10 .
+
+:emp_59 rdf:type :Person ;
+    :name "Employee 59" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_11 .
+
+:emp_60 rdf:type :Person ;
+    :name "Employee 60" ;
+    :role "Manager" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_12 .
+
+:emp_61 rdf:type :Person ;
+    :name "Employee 61" ;
+    :role "Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_13 .
+
+:emp_62 rdf:type :Person ;
+    :name "Employee 62" ;
+    :role "Analyst" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_14 .
+
+:emp_63 rdf:type :Person ;
+    :name "Employee 63" ;
+    :role "Designer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_15 .
+
+:emp_64 rdf:type :Person ;
+    :name "Employee 64" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_16 .
+
+:emp_65 rdf:type :Person ;
+    :name "Employee 65" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_17 .
+
+:emp_66 rdf:type :Person ;
+    :name "Employee 66" ;
+    :role "Manager" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_18 .
+
+:emp_67 rdf:type :Person ;
+    :name "Employee 67" ;
+    :role "Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_19 .
+
+:emp_68 rdf:type :Person ;
+    :name "Employee 68" ;
+    :role "Analyst" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_20 .
+
+:emp_69 rdf:type :Person ;
+    :name "Employee 69" ;
+    :role "Designer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_21 .
+
+:emp_70 rdf:type :Person ;
+    :name "Employee 70" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_22 .
+
+:emp_71 rdf:type :Person ;
+    :name "Employee 71" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_23 .
+
+:emp_72 rdf:type :Person ;
+    :name "Employee 72" ;
+    :role "Manager" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_24 .
+
+:emp_73 rdf:type :Person ;
+    :name "Employee 73" ;
+    :role "Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_25 .
+
+:emp_74 rdf:type :Person ;
+    :name "Employee 74" ;
+    :role "Analyst" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_26 .
+
+:emp_75 rdf:type :Person ;
+    :name "Employee 75" ;
+    :role "Designer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_27 .
+
+:emp_76 rdf:type :Person ;
+    :name "Employee 76" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_28 .
+
+:emp_77 rdf:type :Person ;
+    :name "Employee 77" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_29 .
+
+:emp_78 rdf:type :Person ;
+    :name "Employee 78" ;
+    :role "Manager" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_30 .
+
+:emp_79 rdf:type :Person ;
+    :name "Employee 79" ;
+    :role "Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_31 .
+
+:emp_80 rdf:type :Person ;
+    :name "Employee 80" ;
+    :role "Analyst" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_32 .
+
+:emp_81 rdf:type :Person ;
+    :name "Employee 81" ;
+    :role "Designer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_33 .
+
+:emp_82 rdf:type :Person ;
+    :name "Employee 82" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_34 .
+
+:emp_83 rdf:type :Person ;
+    :name "Employee 83" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_35 .
+
+:emp_84 rdf:type :Person ;
+    :name "Employee 84" ;
+    :role "Manager" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_36 .
+
+:emp_85 rdf:type :Person ;
+    :name "Employee 85" ;
+    :role "Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_37 .
+
+:emp_86 rdf:type :Person ;
+    :name "Employee 86" ;
+    :role "Analyst" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_38 .
+
+:emp_87 rdf:type :Person ;
+    :name "Employee 87" ;
+    :role "Designer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_39 .
+
+:emp_88 rdf:type :Person ;
+    :name "Employee 88" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_40 .
+
+:emp_89 rdf:type :Person ;
+    :name "Employee 89" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_41 .
+
+:emp_90 rdf:type :Person ;
+    :name "Employee 90" ;
+    :role "Manager" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_42 .
+
+:emp_91 rdf:type :Person ;
+    :name "Employee 91" ;
+    :role "Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_43 .
+
+:emp_92 rdf:type :Person ;
+    :name "Employee 92" ;
+    :role "Analyst" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_44 .
+
+:emp_93 rdf:type :Person ;
+    :name "Employee 93" ;
+    :role "Designer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_45 .
+
+:emp_94 rdf:type :Person ;
+    :name "Employee 94" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_46 .
+
+:emp_95 rdf:type :Person ;
+    :name "Employee 95" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_47 .
+
+:emp_96 rdf:type :Person ;
+    :name "Employee 96" ;
+    :role "Manager" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_48 .
+
+:emp_97 rdf:type :Person ;
+    :name "Employee 97" ;
+    :role "Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_49 .
+
+:emp_98 rdf:type :Person ;
+    :name "Employee 98" ;
+    :role "Analyst" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_1 .
+
+:emp_99 rdf:type :Person ;
+    :name "Employee 99" ;
+    :role "Designer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_2 .
+
+:emp_100 rdf:type :Person ;
+    :name "Employee 100" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_3 .
+
+:emp_101 rdf:type :Person ;
+    :name "Employee 101" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_4 .
+
+:emp_102 rdf:type :Person ;
+    :name "Employee 102" ;
+    :role "Manager" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_5 .
+
+:emp_103 rdf:type :Person ;
+    :name "Employee 103" ;
+    :role "Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_6 .
+
+:emp_104 rdf:type :Person ;
+    :name "Employee 104" ;
+    :role "Analyst" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_7 .
+
+:emp_105 rdf:type :Person ;
+    :name "Employee 105" ;
+    :role "Designer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_8 .
+
+:emp_106 rdf:type :Person ;
+    :name "Employee 106" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_9 .
+
+:emp_107 rdf:type :Person ;
+    :name "Employee 107" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_10 .
+
+:emp_108 rdf:type :Person ;
+    :name "Employee 108" ;
+    :role "Manager" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_11 .
+
+:emp_109 rdf:type :Person ;
+    :name "Employee 109" ;
+    :role "Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_12 .
+
+:emp_110 rdf:type :Person ;
+    :name "Employee 110" ;
+    :role "Analyst" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_13 .
+
+:emp_111 rdf:type :Person ;
+    :name "Employee 111" ;
+    :role "Designer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_14 .
+
+:emp_112 rdf:type :Person ;
+    :name "Employee 112" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_15 .
+
+:emp_113 rdf:type :Person ;
+    :name "Employee 113" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_16 .
+
+:emp_114 rdf:type :Person ;
+    :name "Employee 114" ;
+    :role "Manager" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_17 .
+
+:emp_115 rdf:type :Person ;
+    :name "Employee 115" ;
+    :role "Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_18 .
+
+:emp_116 rdf:type :Person ;
+    :name "Employee 116" ;
+    :role "Analyst" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_19 .
+
+:emp_117 rdf:type :Person ;
+    :name "Employee 117" ;
+    :role "Designer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_20 .
+
+:emp_118 rdf:type :Person ;
+    :name "Employee 118" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_21 .
+
+:emp_119 rdf:type :Person ;
+    :name "Employee 119" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_22 .
+
+:emp_120 rdf:type :Person ;
+    :name "Employee 120" ;
+    :role "Manager" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_23 .
+
+:emp_121 rdf:type :Person ;
+    :name "Employee 121" ;
+    :role "Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_24 .
+
+:emp_122 rdf:type :Person ;
+    :name "Employee 122" ;
+    :role "Analyst" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_25 .
+
+:emp_123 rdf:type :Person ;
+    :name "Employee 123" ;
+    :role "Designer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_26 .
+
+:emp_124 rdf:type :Person ;
+    :name "Employee 124" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_27 .
+
+:emp_125 rdf:type :Person ;
+    :name "Employee 125" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_28 .
+
+:emp_126 rdf:type :Person ;
+    :name "Employee 126" ;
+    :role "Manager" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_29 .
+
+:emp_127 rdf:type :Person ;
+    :name "Employee 127" ;
+    :role "Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_30 .
+
+:emp_128 rdf:type :Person ;
+    :name "Employee 128" ;
+    :role "Analyst" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_31 .
+
+:emp_129 rdf:type :Person ;
+    :name "Employee 129" ;
+    :role "Designer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_32 .
+
+:emp_130 rdf:type :Person ;
+    :name "Employee 130" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_33 .
+
+:emp_131 rdf:type :Person ;
+    :name "Employee 131" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_34 .
+
+:emp_132 rdf:type :Person ;
+    :name "Employee 132" ;
+    :role "Manager" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_35 .
+
+:emp_133 rdf:type :Person ;
+    :name "Employee 133" ;
+    :role "Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_36 .
+
+:emp_134 rdf:type :Person ;
+    :name "Employee 134" ;
+    :role "Analyst" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_37 .
+
+:emp_135 rdf:type :Person ;
+    :name "Employee 135" ;
+    :role "Designer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_38 .
+
+:emp_136 rdf:type :Person ;
+    :name "Employee 136" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_39 .
+
+:emp_137 rdf:type :Person ;
+    :name "Employee 137" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_40 .
+
+:emp_138 rdf:type :Person ;
+    :name "Employee 138" ;
+    :role "Manager" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_41 .
+
+:emp_139 rdf:type :Person ;
+    :name "Employee 139" ;
+    :role "Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_42 .
+
+:emp_140 rdf:type :Person ;
+    :name "Employee 140" ;
+    :role "Analyst" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_43 .
+
+:emp_141 rdf:type :Person ;
+    :name "Employee 141" ;
+    :role "Designer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_44 .
+
+:emp_142 rdf:type :Person ;
+    :name "Employee 142" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_45 .
+
+:emp_143 rdf:type :Person ;
+    :name "Employee 143" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_46 .
+
+:emp_144 rdf:type :Person ;
+    :name "Employee 144" ;
+    :role "Manager" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_47 .
+
+:emp_145 rdf:type :Person ;
+    :name "Employee 145" ;
+    :role "Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_48 .
+
+:emp_146 rdf:type :Person ;
+    :name "Employee 146" ;
+    :role "Analyst" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_49 .
+
+:emp_147 rdf:type :Person ;
+    :name "Employee 147" ;
+    :role "Designer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_1 .
+
+:emp_148 rdf:type :Person ;
+    :name "Employee 148" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_2 .
+
+:emp_149 rdf:type :Person ;
+    :name "Employee 149" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_3 .
+
+:emp_150 rdf:type :Person ;
+    :name "Employee 150" ;
+    :role "Manager" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_4 .
+
+:emp_151 rdf:type :Person ;
+    :name "Employee 151" ;
+    :role "Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_5 .
+
+:emp_152 rdf:type :Person ;
+    :name "Employee 152" ;
+    :role "Analyst" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_6 .
+
+:emp_153 rdf:type :Person ;
+    :name "Employee 153" ;
+    :role "Designer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_7 .
+
+:emp_154 rdf:type :Person ;
+    :name "Employee 154" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_8 .
+
+:emp_155 rdf:type :Person ;
+    :name "Employee 155" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_9 .
+
+:emp_156 rdf:type :Person ;
+    :name "Employee 156" ;
+    :role "Manager" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_10 .
+
+:emp_157 rdf:type :Person ;
+    :name "Employee 157" ;
+    :role "Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_11 .
+
+:emp_158 rdf:type :Person ;
+    :name "Employee 158" ;
+    :role "Analyst" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_12 .
+
+:emp_159 rdf:type :Person ;
+    :name "Employee 159" ;
+    :role "Designer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_13 .
+
+:emp_160 rdf:type :Person ;
+    :name "Employee 160" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_14 .
+
+:emp_161 rdf:type :Person ;
+    :name "Employee 161" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_15 .
+
+:emp_162 rdf:type :Person ;
+    :name "Employee 162" ;
+    :role "Manager" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_16 .
+
+:emp_163 rdf:type :Person ;
+    :name "Employee 163" ;
+    :role "Engineer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_17 .
+
+:emp_164 rdf:type :Person ;
+    :name "Employee 164" ;
+    :role "Analyst" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_18 .
+
+:emp_165 rdf:type :Person ;
+    :name "Employee 165" ;
+    :role "Designer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_19 .
+
+:emp_166 rdf:type :Person ;
+    :name "Employee 166" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_20 .
+
+:emp_167 rdf:type :Person ;
+    :name "Employee 167" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_21 .
+
+:emp_168 rdf:type :Person ;
+    :name "Employee 168" ;
+    :role "Manager" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_22 .
+
+:emp_169 rdf:type :Person ;
+    :name "Employee 169" ;
+    :role "Engineer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_23 .
+
+:emp_170 rdf:type :Person ;
+    :name "Employee 170" ;
+    :role "Analyst" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_24 .
+
+:emp_171 rdf:type :Person ;
+    :name "Employee 171" ;
+    :role "Designer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_25 .
+
+:emp_172 rdf:type :Person ;
+    :name "Employee 172" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_23 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_26 .
+
+:emp_173 rdf:type :Person ;
+    :name "Employee 173" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_27 .
+
+:emp_174 rdf:type :Person ;
+    :name "Employee 174" ;
+    :role "Manager" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_25 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_28 .
+
+:emp_175 rdf:type :Person ;
+    :name "Employee 175" ;
+    :role "Engineer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_29 .
+
+:emp_176 rdf:type :Person ;
+    :name "Employee 176" ;
+    :role "Analyst" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_27 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_30 .
+
+:emp_177 rdf:type :Person ;
+    :name "Employee 177" ;
+    :role "Designer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_28 ;
+    :hasSkill :skill_3 ;
+    :worksOn :proj_31 .
+
+:emp_178 rdf:type :Person ;
+    :name "Employee 178" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_29 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_32 .
+
+:emp_179 rdf:type :Person ;
+    :name "Employee 179" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_30 ;
+    :hasSkill :skill_5 ;
+    :worksOn :proj_33 .
+
+:emp_180 rdf:type :Person ;
+    :name "Employee 180" ;
+    :role "Manager" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_34 .
+
+:emp_181 rdf:type :Person ;
+    :name "Employee 181" ;
+    :role "Engineer" ;
+    :worksIn :dept_2 ;
+    :employer :company_1 ;
+    :hasSkill :skill_2 ;
+    :hasSkill :skill_7 ;
+    :worksOn :proj_35 .
+
+:emp_182 rdf:type :Person ;
+    :name "Employee 182" ;
+    :role "Analyst" ;
+    :worksIn :dept_3 ;
+    :employer :company_1 ;
+    :hasSkill :skill_3 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_36 .
+
+:emp_183 rdf:type :Person ;
+    :name "Employee 183" ;
+    :role "Designer" ;
+    :worksIn :dept_4 ;
+    :employer :company_1 ;
+    :hasSkill :skill_4 ;
+    :hasSkill :skill_9 ;
+    :worksOn :proj_37 .
+
+:emp_184 rdf:type :Person ;
+    :name "Employee 184" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_5 ;
+    :employer :company_1 ;
+    :hasSkill :skill_5 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_38 .
+
+:emp_185 rdf:type :Person ;
+    :name "Employee 185" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_6 ;
+    :employer :company_1 ;
+    :hasSkill :skill_6 ;
+    :hasSkill :skill_11 ;
+    :worksOn :proj_39 .
+
+:emp_186 rdf:type :Person ;
+    :name "Employee 186" ;
+    :role "Manager" ;
+    :worksIn :dept_7 ;
+    :employer :company_1 ;
+    :hasSkill :skill_7 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_40 .
+
+:emp_187 rdf:type :Person ;
+    :name "Employee 187" ;
+    :role "Engineer" ;
+    :worksIn :dept_8 ;
+    :employer :company_1 ;
+    :hasSkill :skill_8 ;
+    :hasSkill :skill_13 ;
+    :worksOn :proj_41 .
+
+:emp_188 rdf:type :Person ;
+    :name "Employee 188" ;
+    :role "Analyst" ;
+    :worksIn :dept_9 ;
+    :employer :company_1 ;
+    :hasSkill :skill_9 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_42 .
+
+:emp_189 rdf:type :Person ;
+    :name "Employee 189" ;
+    :role "Designer" ;
+    :worksIn :dept_10 ;
+    :employer :company_1 ;
+    :hasSkill :skill_10 ;
+    :hasSkill :skill_15 ;
+    :worksOn :proj_43 .
+
+:emp_190 rdf:type :Person ;
+    :name "Employee 190" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_11 ;
+    :employer :company_1 ;
+    :hasSkill :skill_11 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_44 .
+
+:emp_191 rdf:type :Person ;
+    :name "Employee 191" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_12 ;
+    :employer :company_1 ;
+    :hasSkill :skill_12 ;
+    :hasSkill :skill_17 ;
+    :worksOn :proj_45 .
+
+:emp_192 rdf:type :Person ;
+    :name "Employee 192" ;
+    :role "Manager" ;
+    :worksIn :dept_13 ;
+    :employer :company_1 ;
+    :hasSkill :skill_13 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_46 .
+
+:emp_193 rdf:type :Person ;
+    :name "Employee 193" ;
+    :role "Engineer" ;
+    :worksIn :dept_14 ;
+    :employer :company_1 ;
+    :hasSkill :skill_14 ;
+    :hasSkill :skill_19 ;
+    :worksOn :proj_47 .
+
+:emp_194 rdf:type :Person ;
+    :name "Employee 194" ;
+    :role "Analyst" ;
+    :worksIn :dept_15 ;
+    :employer :company_1 ;
+    :hasSkill :skill_15 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_48 .
+
+:emp_195 rdf:type :Person ;
+    :name "Employee 195" ;
+    :role "Designer" ;
+    :worksIn :dept_16 ;
+    :employer :company_1 ;
+    :hasSkill :skill_16 ;
+    :hasSkill :skill_21 ;
+    :worksOn :proj_49 .
+
+:emp_196 rdf:type :Person ;
+    :name "Employee 196" ;
+    :role "QA Engineer" ;
+    :worksIn :dept_17 ;
+    :employer :company_1 ;
+    :hasSkill :skill_17 ;
+    :hasSkill :skill_22 ;
+    :hasSkill :skill_27 ;
+    :worksOn :proj_1 .
+
+:emp_197 rdf:type :Person ;
+    :name "Employee 197" ;
+    :role "DevOps Engineer" ;
+    :worksIn :dept_18 ;
+    :employer :company_1 ;
+    :hasSkill :skill_18 ;
+    :hasSkill :skill_23 ;
+    :worksOn :proj_2 .
+
+:emp_198 rdf:type :Person ;
+    :name "Employee 198" ;
+    :role "Manager" ;
+    :worksIn :dept_19 ;
+    :employer :company_1 ;
+    :hasSkill :skill_19 ;
+    :hasSkill :skill_24 ;
+    :hasSkill :skill_29 ;
+    :worksOn :proj_3 .
+
+:emp_199 rdf:type :Person ;
+    :name "Employee 199" ;
+    :role "Engineer" ;
+    :worksIn :dept_20 ;
+    :employer :company_1 ;
+    :hasSkill :skill_20 ;
+    :hasSkill :skill_25 ;
+    :worksOn :proj_4 .
+
+:emp_200 rdf:type :Person ;
+    :name "Employee 200" ;
+    :role "Analyst" ;
+    :worksIn :dept_1 ;
+    :employer :company_1 ;
+    :hasSkill :skill_21 ;
+    :hasSkill :skill_26 ;
+    :hasSkill :skill_1 ;
+    :worksOn :proj_5 .
