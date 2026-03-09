@@ -83,8 +83,18 @@ def index(request):
         'active_visualizer': _ui_state.get('visualizer', 'simple'),
         'cli_output': _ui_state.get('cli_output', []),
         'graph_data_json': graph_data_json,
+        'urls_json': json.dumps({  # ✅ add this
+            'upload': '/api/upload/',
+            'visualizer': '/api/visualizer/',
+            'search': '/api/search/',
+            'filter': '/api/filter/',
+            'undo': '/api/undo/',
+            'reset': '/api/reset/',
+            'cli': '/api/cli/',
+            'workspace_switch': '/api/workspace/switch/',
+            'workspace_delete': '/api/workspace/delete/',
+        }),
     })
-
     return render(request, 'base.html', ctx)
 
 

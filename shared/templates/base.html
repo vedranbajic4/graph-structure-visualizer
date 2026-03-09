@@ -141,10 +141,6 @@
     <div id="status-bar" class="status-bar"></div>
 </div>
 
-</body>
-</html>
-
-
 {# ═══════════════════════════════════════════════════════════ #}
 {# JAVASCRIPT                                                 #}
 {# ═══════════════════════════════════════════════════════════ #}
@@ -153,6 +149,8 @@
    Graph data embedded from server (for Tree View & Bird View)
    ============================================================ */
 let GRAPH_DATA = {{ graph_data_json|safe }};
+const URLS = {{ urls_json|safe }};
+
 
 /* ============================================================
    AJAX helper
@@ -228,7 +226,7 @@ async function handleUpload(e) {
     const fd = new FormData(form);
     document.getElementById('upload-error').style.display = 'none';
 
-    const data = await api('/api/upload/', fd, true);
+    const data = await api(URLS.upload, fd, true);
     if (data.success) {
         toggleUpload();
         updatePanels(data);
@@ -245,7 +243,7 @@ async function handleUpload(e) {
    Visualizer switch
    ============================================================ */
 async function switchVisualizer(name) {
-    const data = await api('/api/visualizer/', { visualizer: name });
+    const data = await api(URLS.visualizer, { visualizer: name });
     updatePanels(data);
 }
 
@@ -255,7 +253,7 @@ async function switchVisualizer(name) {
 async function doSearch() {
     const q = document.getElementById('search-input').value.trim();
     if (!q) return;
-    const data = await api('/api/search/', { query: q });
+    const data = await api(URLS.search, { query: q });
     updatePanels(data);
     if (data.success) { document.getElementById('search-input').value = ''; showStatus('Search applied.', false); }
 }
@@ -263,19 +261,19 @@ async function doSearch() {
 async function doFilter() {
     const q = document.getElementById('filter-input').value.trim();
     if (!q) return;
-    const data = await api('/api/filter/', { query: q });
+    const data = await api(URLS.filter, { query: q });
     updatePanels(data);
     if (data.success) { document.getElementById('filter-input').value = ''; showStatus('Filter applied.', false); }
 }
 
 async function doUndo() {
-    const data = await api('/api/undo/', {});
+    const data = await api(URLS.undo, {});
     updatePanels(data);
     if (data.success) showStatus('Undo successful.', false);
 }
 
 async function doReset() {
-    const data = await api('/api/reset/', {});
+    const data = await api(URLS.reset, {});
     updatePanels(data);
     if (data.success) showStatus('Workspace reset to original graph.', false);
 }
@@ -288,7 +286,7 @@ async function doCli() {
     const cmd = inp.value.trim();
     if (!cmd) return;
 
-    const data = await api('/api/cli/', { command: cmd });
+    const data = await api(URLS.cli, { command: cmd });
     inp.value = '';
 
     /* Append output line */
@@ -309,12 +307,12 @@ function escHTML(s) { const d = document.createElement('div'); d.textContent = s
    Workspace management
    ============================================================ */
 async function switchWorkspace(id) {
-    const data = await api('/api/workspace/switch/', { workspace_id: id });
+    const data = await api(URLS.workspace_switch, { workspace_id: id });
     updatePanels(data);
 }
 
 async function deleteWorkspace(id) {
-    const data = await api('/api/workspace/delete/', { workspace_id: id });
+    const data = await api(URLS.workspace_delete, { workspace_id: id });
     updatePanels(data);
 }
 
@@ -729,3 +727,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
