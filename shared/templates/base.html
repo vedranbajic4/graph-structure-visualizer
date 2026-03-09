@@ -1,10 +1,9 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <title>Graph Explorer</title>
 </head>
@@ -13,26 +12,21 @@
 {# ── CSRF token for AJAX ─────────────────────────────────── #}
 <script>const CSRF_TOKEN = '{{ csrf_token }}';</script>
 
-{# ═══════════════════════════════════════════════════════════ #}
-{# HEADER                                                      #}
-{# ═══════════════════════════════════════════════════════════ #}
 <header class="app-header">
     <h1 class="app-title">Graph Explorer</h1>
 
     <div class="header-controls">
 
-        {# ── Upload section ──────────────────────────────── #}
         <button id="upload-toggle-btn" class="btn btn-primary" onclick="toggleUpload()">
             &#43; Load Graph
         </button>
 
-        {# ── Workspace tabs ──────────────────────────────── #}
         <div class="workspace-tabs" id="workspace-tabs">
             {% for ws in workspaces %}
             <button class="ws-tab {% if ws.workspace_id == active_workspace_id %}active{% endif %}"
                     data-ws-id="{{ ws.workspace_id }}"
                     onclick="switchWorkspace('{{ ws.workspace_id }}')">
-                {{ ws.name|truncatechars:16 }}
+                {{ ws.name }}
                 <span class="ws-tab-close" onclick="event.stopPropagation(); deleteWorkspace('{{ ws.workspace_id }}')">
                     &times;
                 </span>
@@ -40,7 +34,6 @@
             {% endfor %}
         </div>
 
-        {# ── Visualizer selector ─────────────────────────── #}
         <label class="vis-label" for="vis-select">Visualizer:</label>
         <select id="vis-select" onchange="switchVisualizer(this.value)">
             {% for v in visualizers %}
@@ -50,7 +43,6 @@
     </div>
 </header>
 
-{# ── Upload panel (hidden by default) ───────────────────── #}
 <div class="upload-panel" id="upload-panel" style="display:none;">
     <form id="upload-form" enctype="multipart/form-data" onsubmit="return handleUpload(event)">
         <label for="upload-plugin">Data Source:</label>
@@ -73,12 +65,8 @@
     <div id="upload-error" class="error-msg" style="display:none;"></div>
 </div>
 
-{# ═══════════════════════════════════════════════════════════ #}
-{# THREE-PANEL GRID                                           #}
-{# ═══════════════════════════════════════════════════════════ #}
 <div class="workspace-grid">
 
-    {# ── Tree View (left sidebar) ─────────────────────────── #}
     <aside class="panel tree-view" id="tree-panel">
         <h2>Tree View</h2>
         <div id="tree-container" class="tree-container">
@@ -88,7 +76,6 @@
         </div>
     </aside>
 
-    {# ── Bird View (bottom left) ────────────────────────────── #}
     <section class="panel bird-view" id="bird-panel">
         <h2>Bird View</h2>
         <div id="bird-container" class="bird-container">
@@ -98,7 +85,6 @@
         </div>
     </section>
 
-    {# ── Main View (center right) ─────────────────────────── #}
     <main class="panel main-view" id="main-panel">
         <h2>Main View
             {% if workspace %}
@@ -118,12 +104,8 @@
     </main>
 </div>
 
-{# ═══════════════════════════════════════════════════════════ #}
-{# BOTTOM TOOLBAR                                             #}
-{# ═══════════════════════════════════════════════════════════ #}
 <div class="bottom-toolbar">
 
-    {# ── Search & Filter row ──────────────────────────────── #}
     <div class="sf-row">
         <div class="sf-group">
             <input type="text" id="search-input" placeholder="Search (contains)..." class="sf-input">
@@ -139,7 +121,6 @@
         </div>
     </div>
 
-    {# ── CLI terminal ─────────────────────────────────────── #}
     <div class="cli-area">
         <div class="cli-output" id="cli-output">
             {% for entry in cli_output %}
@@ -168,6 +149,8 @@
    Graph data embedded from server (for Tree View & Bird View)
    ============================================================ */
 let GRAPH_DATA = {{ graph_data_json|safe }};
+const URLS = {{ urls_json|safe }};
+
 
 /* ============================================================
    AJAX helper
@@ -243,7 +226,7 @@ async function handleUpload(e) {
     const fd = new FormData(form);
     document.getElementById('upload-error').style.display = 'none';
 
-    const data = await api('/api/upload/', fd, true);
+    const data = await api(URLS.upload, fd, true);
     if (data.success) {
         toggleUpload();
         updatePanels(data);
@@ -260,7 +243,7 @@ async function handleUpload(e) {
    Visualizer switch
    ============================================================ */
 async function switchVisualizer(name) {
-    const data = await api('/api/visualizer/', { visualizer: name });
+    const data = await api(URLS.visualizer, { visualizer: name });
     updatePanels(data);
 }
 
@@ -270,7 +253,7 @@ async function switchVisualizer(name) {
 async function doSearch() {
     const q = document.getElementById('search-input').value.trim();
     if (!q) return;
-    const data = await api('/api/search/', { query: q });
+    const data = await api(URLS.search, { query: q });
     updatePanels(data);
     if (data.success) { document.getElementById('search-input').value = ''; showStatus('Search applied.', false); }
 }
@@ -278,19 +261,19 @@ async function doSearch() {
 async function doFilter() {
     const q = document.getElementById('filter-input').value.trim();
     if (!q) return;
-    const data = await api('/api/filter/', { query: q });
+    const data = await api(URLS.filter, { query: q });
     updatePanels(data);
     if (data.success) { document.getElementById('filter-input').value = ''; showStatus('Filter applied.', false); }
 }
 
 async function doUndo() {
-    const data = await api('/api/undo/', {});
+    const data = await api(URLS.undo, {});
     updatePanels(data);
     if (data.success) showStatus('Undo successful.', false);
 }
 
 async function doReset() {
-    const data = await api('/api/reset/', {});
+    const data = await api(URLS.reset, {});
     updatePanels(data);
     if (data.success) showStatus('Workspace reset to original graph.', false);
 }
@@ -303,7 +286,7 @@ async function doCli() {
     const cmd = inp.value.trim();
     if (!cmd) return;
 
-    const data = await api('/api/cli/', { command: cmd });
+    const data = await api(URLS.cli, { command: cmd });
     inp.value = '';
 
     /* Append output line */
@@ -324,12 +307,12 @@ function escHTML(s) { const d = document.createElement('div'); d.textContent = s
    Workspace management
    ============================================================ */
 async function switchWorkspace(id) {
-    const data = await api('/api/workspace/switch/', { workspace_id: id });
+    const data = await api(URLS.workspace_switch, { workspace_id: id });
     updatePanels(data);
 }
 
 async function deleteWorkspace(id) {
-    const data = await api('/api/workspace/delete/', { workspace_id: id });
+    const data = await api(URLS.workspace_delete, { workspace_id: id });
     updatePanels(data);
 }
 
@@ -744,3 +727,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
