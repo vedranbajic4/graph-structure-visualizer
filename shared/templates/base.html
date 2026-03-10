@@ -188,7 +188,10 @@ function updatePanels(data) {
     /* Main View */
     const mc = document.getElementById('main-container');
     if (data.graph_html !== undefined) {
-        mc.innerHTML = data.graph_html || '<div class="empty-state"><p>No graph loaded.</p></div>';
+        setHTMLAndRunScripts(
+            mc,
+            data.graph_html || '<div class="empty-state"><p>No graph loaded.</p></div>'
+        );
     }
 
     /* Graph data for Tree + Bird */
@@ -698,7 +701,19 @@ function attachMainViewNodeClicks() {
         });
     });
 }
-
+// ── Drop-in replacement for innerHTML that also runs injected scripts ──
+function setHTMLAndRunScripts(el, html) {
+    el.innerHTML = html;
+    Array.from(el.querySelectorAll('script')).forEach(oldScript => {
+        const newScript = document.createElement('script');
+        // Copy any attributes (e.g. type, src)
+        Array.from(oldScript.attributes).forEach(attr =>
+            newScript.setAttribute(attr.name, attr.value)
+        );
+        newScript.textContent = oldScript.textContent;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
 /* ============================================================
    Initial render of Tree + Bird views on page load
    ============================================================ */
