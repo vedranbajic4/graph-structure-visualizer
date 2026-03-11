@@ -63,14 +63,15 @@ class XmlDataSourcePlugin(DataSourcePlugin):
         graph.add_node(current_node)
 
         for attr_name, attr_value in root.attrib.items():
-            attr_node = XMLNode(node_id=f'{current_id}:{attr_name}', value=attr_value)
-            graph.add_node(attr_node)
-            attr_edge = Edge(source_node=current_node,
-                             target_node=attr_node,
-                             edge_id=f'attr:{current_id}->{attr_name}',
-                             EdgeDirection = EdgeDirection.DIRECTED,
-                             attr=attr_name)
-            graph.add_edge(attr_edge)
+            # attr_node = XMLNode(node_id=f'{current_id}:{attr_name}', value=attr_value)
+            # graph.add_node(attr_node)
+            # attr_edge = Edge(source_node=current_node,
+            #                  target_node=attr_node,
+            #                  edge_id=f'attr:{current_id}->{attr_name}',
+            #                  EdgeDirection = EdgeDirection.DIRECTED,
+            #                  attr=attr_name)
+            # graph.add_edge(attr_edge)
+            current_node.attributes[attr_name] = attr_value
         
         for child in root:
             # Handle cyclic edges
@@ -83,32 +84,52 @@ class XmlDataSourcePlugin(DataSourcePlugin):
 
                 if len(targets) != 1:
                     raise ValueError(
-                    f"Invalid reference '{node_xpath}' in XML: expected exactly 1 target, found {len(targets)}."
+                        f"Invalid reference '{node_xpath}' in XML: expected exactly 1 target, found {len(targets)}."
                     )
                 
                 target = targets[0]
                 target_id = id_map[tree.getpath(target)]
                 connection_map.setdefault(current_id, []).append((relation_name, target_id))
 
-            # Leaf node -> same as attribute
+            # Leaf node with no attributes -> same as attribute
+            elif len(child) == 0 and len(child.attrib)==0:
+                attribute_name = etree.QName(child.tag).localname
+
+                leaf_text = child.text.strip() if child.text else ''
+                # attr_node = XMLNode(node_id=f'{current_id}:{attribute_name}', value=leaf_text)
+                # graph.add_node(attr_node)
+
+                # # If the edge has any attributes just add them directly
+                # edge_attributes = dict(child.attrib)
+
+                # attr_edge = Edge(edge_id=f'attr:{current_id}->{attribute_name}',
+                #                     source_node=current_node,
+                #                     target_node=attr_node,
+                #                     EdgeDirection=EdgeDirection.DIRECTED,
+                #                     label=attribute_name,
+                #                     **edge_attributes)
+
+                # graph.add_edge(attr_edge)
+                current_node.attributes[attribute_name] = leaf_text
+
+            # Leaf node with attributes -> new node
             elif len(child) == 0:
                 attribute_name = etree.QName(child.tag).localname
 
                 leaf_text = child.text.strip() if child.text else ''
-                attr_node = XMLNode(node_id=f'{current_id}:{attribute_name}', value=leaf_text)
-                graph.add_node(attr_node)
+                additional_attributes = dict(child.attrib)
 
-                # If the edge has any attributes just add them directly
-                edge_attributes = dict(child.attrib)
+                attr_node = XMLNode(node_id=f'{current_id}:{attribute_name}', value=leaf_text, **additional_attributes)
+                graph.add_node(attr_node)
 
                 attr_edge = Edge(edge_id=f'attr:{current_id}->{attribute_name}',
                                     source_node=current_node,
                                     target_node=attr_node,
                                     EdgeDirection=EdgeDirection.DIRECTED,
-                                    label=attribute_name,
-                                    **edge_attributes)
+                                    label=attribute_name)
 
                 graph.add_edge(attr_edge)
+
 
             # Has grandchildren -> new child object
             else:
@@ -122,7 +143,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                                     source_node=current_node,
                                     target_node=child_node,
                                     EdgeDirection=EdgeDirection.DIRECTED,
-                                    label="Child")) # TODO: Vidi sta ces sa label kada ima GUI
+                                    label="Child"))
 
         return current_node
     
