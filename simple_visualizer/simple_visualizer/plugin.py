@@ -366,6 +366,8 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         .attr('dy', -16)
         .text(d => d.label);
 
+    node.attr('data-node-id', d => d.id)
+
     /* ── Node tooltip ────────────────────────────────── */
     node.on('mouseover', function(event, d) {{
         let html = '<strong>' + d.label + '</strong> <em>(' + d.id + ')</em><br>';
