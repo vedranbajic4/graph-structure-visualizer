@@ -167,6 +167,17 @@ class BlockVisualizerPlugin(VisualizerPlugin):
         z-index: 1000;
     }}
 
+    .sv-node-circle {{
+        fill: none;
+        stroke: transparent;
+        stroke-width: 3px;
+        pointer-events: none;
+    }}
+
+    .sv-node-circle.selected {{
+        stroke: #ff6600;
+    }}
+
     .sv-fo-wrapper {{ font: {font_size} {font}; }}
     .sv-table {{
     border-collapse: collapse;
@@ -257,10 +268,11 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     /* ── Force simulation ────────────────────────────── */
     const simulation = d3.forceSimulation(nodesData)
-        .force('link', d3.forceLink(edgesData).id(d => d.id).distance(100))
-        .force('charge', d3.forceManyBody().strength(-300))
+        .force('link', d3.forceLink(edgesData).id(d => d.id).distance(60))
+        .force('charge', d3.forceManyBody().strength(-60))
         .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(20));
+        .force('collision', d3.forceCollide().radius(20))
+        .velocityDecay(0.65);
 
     /* ── Draw edges ──────────────────────────────────── */
     const link = g.append('g')
@@ -337,6 +349,17 @@ class BlockVisualizerPlugin(VisualizerPlugin):
       d.width = w;
       d.height = h;
 
+      // Highlight rectangle
+      d3.select(this)
+        .append("rect")
+        .attr("class", "sv-node-circle")
+        .attr("x", -w / 2 -1)
+        .attr("y", -h / 2 -1)
+        .attr("width", w + 2)
+        .attr("height", h + 2)
+        .attr("rx", 6)
+        .attr("ry", 6);
+
       const fo = d3.select(this)
         .append("foreignObject")
         .attr("class", "node-fo")
@@ -351,6 +374,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     }});
 
+    node.attr('data-node-id', d => d.id)
     
     simulation.force("collision",
         d3.forceCollide(d =>
@@ -379,8 +403,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
     /* ── Click-to-select ─────────────────────────────── */
     node.on('click', function(event, d) {{
         d3.selectAll('.sv-node-circle').classed('selected', false);
-        d3.select(this).select('circle').classed('selected', true);
-        /* Dispatch custom event for cross-view sync */
+        d3.select(this).select('.sv-node-circle').classed('selected', true);
         container.dispatchEvent(new CustomEvent('node-selected', {{ detail: {{ nodeId: d.id }} }}));
     }});
 
@@ -410,7 +433,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     /* ── Drag handlers ───────────────────────────────── */
     function dragStarted(event, d) {{
-        if (!event.active) simulation.alphaTarget(0.3).restart();
+        if (!event.active) simulation.alphaTarget(0.08).restart();
         d.fx = d.x; d.fy = d.y;
     }}
     function dragged(event, d) {{
