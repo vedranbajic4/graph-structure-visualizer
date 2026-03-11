@@ -666,10 +666,12 @@ function highlightNodeAllViews(nodeId) {
 
     /* Main View — find circle whose sibling .sv-label text maps to nodeId */
     document.querySelectorAll('.sv-node-circle').forEach(circle => {
-        const labelEl = circle.parentElement.querySelector('.sv-label');
-        if (!labelEl) return;
-        const id = labelToId[labelEl.textContent.trim()];
+        const id = circle.parentElement.dataset.nodeId;
         circle.classList.toggle('selected', id === nodeId);
+        // const labelEl = circle.parentElement.querySelector('.sv-label');
+        // if (!labelEl) return;
+        // const id = labelToId[labelEl.textContent.trim()];
+        // circle.classList.toggle('selected', id === nodeId);
     });
 
     /* Tree View */
@@ -682,6 +684,10 @@ function highlightNodeAllViews(nodeId) {
         window._birdView.svg.selectAll('circle')
             .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
             .attr('r',    d => d.id === nodeId ? 5 : 3);
+
+        window._birdView.svg.selectAll('circle')
+            .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
+            .attr('r',    d => d.id === nodeId ? 5 : 3);
     }
 }
 
@@ -690,9 +696,7 @@ function attachMainViewNodeClicks() {
     const labelToId = buildLabelToIdMap();
     document.querySelectorAll('.sv-node-circle').forEach(circle => {
         const g = circle.parentElement;
-        const labelEl = g.querySelector('.sv-label');
-        if (!labelEl) return;
-        const nodeId = labelToId[labelEl.textContent.trim()];
+        const nodeId = circle.parentElement.dataset.nodeId;
         if (!nodeId) return;
         g.style.cursor = 'pointer';
         g.addEventListener('click', (e) => {
