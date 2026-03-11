@@ -1,0 +1,20 @@
+# ─────────────────────────────────────────────────────────
+# Graph Structure Visualizer — Python dependencies
+# ─────────────────────────────────────────────────────────
+# Install with: pip install -r requirements.txt
+#
+# Note: The project's own packages (api, core, plugins) are
+#       installed separately via their setup.py files.
+#       This file lists only third-party dependencies.
+# ─────────────────────────────────────────────────────────
+
+# Web frameworks
+Django>=4.2
+Flask>=3.0
+
+# Data source plugin dependencies
+rdflib>=6.0.0
+lxml>=5.0.0
+
+# Testing
+pytest>=7.0
