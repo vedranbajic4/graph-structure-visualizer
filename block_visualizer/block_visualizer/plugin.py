@@ -405,7 +405,9 @@ class BlockVisualizerPlugin(VisualizerPlugin):
     );
 
     /* ── Tooltip ─────────────────────────────────────── */
+    let isDragging = false;
     node.on('mouseover', function(event, d) {{
+        if (isDragging) return;
         let html = '<strong>' + d.label + '</strong> <em>(' + d.id + ')</em><br>';
         for (const [k, v] of Object.entries(d.attributes)) {{
             html += k + ': ' + v + '<br>';
@@ -424,9 +426,15 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     /* ── Click-to-select ─────────────────────────────── */
     node.on('click', function(event, d) {{
+        event.stopPropagation();
         d3.selectAll('.sv-node-circle').classed('selected', false);
         d3.select(this).select('.sv-node-circle').classed('selected', true);
         container.dispatchEvent(new CustomEvent('node-selected', {{ detail: {{ nodeId: d.id }} }}));
+    }});
+
+    /* Click SVG background → deselect */
+    svg.on('click', function() {{
+        if (typeof deselectAllNodes === 'function') deselectAllNodes();
     }});
 
     /* ── Tick ─────────────────────────────────────────── */
@@ -455,6 +463,8 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     /* ── Drag handlers ───────────────────────────────── */
     function dragStarted(event, d) {{
+        isDragging = true;
+        tooltip.style.opacity = 0;
         if (!event.active) simulation.alphaTarget(0.08).restart();
         d.fx = d.x; d.fy = d.y;
     }}
@@ -462,6 +472,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
         d.fx = event.x; d.fy = event.y;
     }}
     function dragEnded(event, d) {{
+        isDragging = false;
         if (!event.active) simulation.alphaTarget(0);
         d.fx = null; d.fy = null;
     }}
