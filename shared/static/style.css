@@ -160,11 +160,17 @@ body {
 }
 .tree-label {
     cursor: pointer;
-    padding: 1px 4px;
+    padding: 2px 6px;
     border-radius: 3px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    display: inline-block;
+    margin: 1px 0;
 }
-.tree-label:hover { background: #ebf5fb; }
-.tree-label.selected { background: #3498db; color: #fff; }
+.tree-label:hover { background: #ebf5fb; border-color: #3498db; }
+.tree-label.selected { background: #3498db; color: #fff; border-color: #2980b9; }
+.tree-label.cycle-ref { color: #e67e22; font-style: italic; border-color: #e67e22; background: #fef9f3; }
+.tree-attr { color: #6b7280; font-size: 12px; padding-left: 18px; }
 
 /* Bird View — bottom left */
 .bird-view {

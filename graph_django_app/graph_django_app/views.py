@@ -1,9 +1,9 @@
 """
-    Django views — wires the GraphPlatform core into HTTP endpoints.
+    Django views — thin HTTP layer over the GraphPlatform core.
 
-    The index view renders the full 3-panel page.
-    All other endpoints are AJAX (return JsonResponse) so the
-    page updates without a full reload.
+    All view-building logic (Main View, Tree View, Bird View) lives in
+    ``core.services.view_service.ViewService`` and is invoked through
+    ``GraphPlatform.build_view_response()``.
 """
 import json
 import logging
@@ -24,58 +24,38 @@ _ui_state: dict = {
     'cli_output': [],
 }
 
+_URLS = {
+    'upload': '/api/upload/',
+    'visualizer': '/api/visualizer/',
+    'search': '/api/search/',
+    'filter': '/api/filter/',
+    'undo': '/api/undo/',
+    'reset': '/api/reset/',
+    'cli': '/api/cli/',
+    'workspace_switch': '/api/workspace/switch/',
+    'workspace_delete': '/api/workspace/delete/',
+}
 
-# ── Helpers ──────────────────────────────────────────────────────
 
 def _get_platform() -> GraphPlatform:
-    """Return the singleton GraphPlatform, creating it on first call."""
     return GraphPlatform.get_instance()
 
 
-def _graph_response(platform, visualizer_name=None):
-    """
-    Build a dict suitable for JsonResponse with the current graph state.
-    Includes the HTML from the visualizer plugin + raw graph data for
-    Tree View / Bird View.
-    """
-    ws = platform.get_active_workspace()
-    if ws is None:
-        return {
-            'has_graph': False,
-            'graph_html': '',
-            'graph_data': None,
-            'workspace': None,
-            'workspaces': platform.list_workspaces(),
-        }
-
-    vis_name = visualizer_name or _ui_state.get('visualizer', 'simple')
-    try:
-        graph_html = platform.visualize(vis_name)
-    except Exception as exc:
-        graph_html = f'<div class="vis-error">Visualization error: {exc}</div>'
-
-    return {
-        'has_graph': True,
-        'graph_html': graph_html,
-        'graph_data': ws.current_graph.to_dict(),
-        'workspace': ws.to_dict(),
-        'workspaces': platform.list_workspaces(),
-    }
+def _view_response(platform, visualizer_name=None):
+    """Delegate view building to the core ViewService."""
+    vis = visualizer_name or _ui_state.get('visualizer', 'simple')
+    return platform.build_view_response(visualizer_name=vis)
 
 
 # ── Page view ────────────────────────────────────────────────────
 
 def index(request):
-    """
-    Render the full Graph Explorer page with the three-panel layout.
-    All subsequent interactions happen via AJAX endpoints below.
-    """
     platform = _get_platform()
-    ctx = _graph_response(platform)
+    ctx = _view_response(platform)
 
-    # Serialize graph data for embedding in <script> tag
     graph_data_json = json.dumps(ctx.get('graph_data'), default=str) \
         if ctx.get('graph_data') else 'null'
+    tree_data_json = json.dumps(ctx.get('tree_data', []), default=str)
 
     ctx.update({
         'data_sources': platform.get_data_source_names(),
@@ -83,33 +63,16 @@ def index(request):
         'active_visualizer': _ui_state.get('visualizer', 'simple'),
         'cli_output': _ui_state.get('cli_output', []),
         'graph_data_json': graph_data_json,
-        'urls_json': json.dumps({  # ✅ add this
-            'upload': '/api/upload/',
-            'visualizer': '/api/visualizer/',
-            'search': '/api/search/',
-            'filter': '/api/filter/',
-            'undo': '/api/undo/',
-            'reset': '/api/reset/',
-            'cli': '/api/cli/',
-            'workspace_switch': '/api/workspace/switch/',
-            'workspace_delete': '/api/workspace/delete/',
-        }),
+        'tree_data_json': tree_data_json,
+        'urls_json': json.dumps(_URLS),
     })
     return render(request, 'base.html', ctx)
 
 
-# ── AJAX endpoints (all return JsonResponse) ─────────────────────
+# ── AJAX endpoints ───────────────────────────────────────────────
 
 @require_POST
 def upload_file(request):
-    """
-    Handle file upload + data source selection → parse → create workspace.
-
-    Expects multipart/form-data with:
-        - file: the data file
-        - plugin_name: entry-point name of the data source plugin
-        - workspace_name (optional): human-readable label
-    """
     platform = _get_platform()
 
     plugin_name = request.POST.get('plugin_name', '')
@@ -121,22 +84,16 @@ def upload_file(request):
     if not plugin_name:
         return JsonResponse({'success': False, 'error': 'No data source selected.'})
 
-    # Save uploaded file to media/uploads/
     upload_dir = Path(settings.MEDIA_ROOT) / 'uploads'
     upload_dir.mkdir(parents=True, exist_ok=True)
-
     file_path = upload_dir / uploaded_file.name
     with open(file_path, 'wb') as f:
         for chunk in uploaded_file.chunks():
             f.write(chunk)
 
     try:
-        platform.load_graph(
-            plugin_name,
-            str(file_path),
-            workspace_name or None,
-        )
-        resp = _graph_response(platform)
+        platform.load_graph(plugin_name, str(file_path), workspace_name or None)
+        resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
@@ -146,30 +103,24 @@ def upload_file(request):
 
 @require_POST
 def switch_visualizer(request):
-    """Change the active visualizer plugin (simple / block)."""
     platform = _get_platform()
     data = json.loads(request.body)
     name = data.get('visualizer', 'simple')
     _ui_state['visualizer'] = name
 
-    resp = _graph_response(platform, name)
+    resp = _view_response(platform, name)
     resp['success'] = True
     return JsonResponse(resp, json_dumps_params={'default': str})
 
 
 @require_POST
 def search_graph(request):
-    """
-    Apply a search query on the active workspace (server-side).
-    Per spec §2.1.2: "Nije dozvoljeno pretragu i filtriranje raditi u JS-u."
-    """
     platform = _get_platform()
     data = json.loads(request.body)
-    query = data.get('query', '')
 
     try:
-        platform.search_graph(query)
-        resp = _graph_response(platform)
+        platform.search_graph(data.get('query', ''))
+        resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
@@ -178,17 +129,12 @@ def search_graph(request):
 
 @require_POST
 def filter_graph(request):
-    """
-    Apply a filter query on the active workspace (server-side).
-    Format: "<attribute> <comparator> <value>"
-    """
     platform = _get_platform()
     data = json.loads(request.body)
-    query = data.get('query', '')
 
     try:
-        platform.filter_graph(query)
-        resp = _graph_response(platform)
+        platform.filter_graph(data.get('query', ''))
+        resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
@@ -197,26 +143,22 @@ def filter_graph(request):
 
 @require_POST
 def undo_action(request):
-    """Undo the last search / filter operation."""
     platform = _get_platform()
-
     result = platform.undo()
     if result is None:
         return JsonResponse({'success': False, 'error': 'Nothing to undo.'})
 
-    resp = _graph_response(platform)
+    resp = _view_response(platform)
     resp['success'] = True
     return JsonResponse(resp, json_dumps_params={'default': str})
 
 
 @require_POST
 def reset_graph(request):
-    """Reset the active workspace to its original graph."""
     platform = _get_platform()
-
     try:
         platform.reset_workspace()
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
@@ -225,10 +167,6 @@ def reset_graph(request):
 
 @require_POST
 def cli_execute(request):
-    """
-    Execute a CLI command on the active workspace's graph.
-    Returns the command result message and the updated graph.
-    """
     platform = _get_platform()
     data = json.loads(request.body)
     command_text = data.get('command', '')
@@ -236,7 +174,6 @@ def cli_execute(request):
     try:
         result = platform.execute_command(command_text)
 
-        # Keep a rolling history of CLI interactions
         entry = {
             'command': command_text,
             'message': result.message,
@@ -245,7 +182,7 @@ def cli_execute(request):
         _ui_state.setdefault('cli_output', []).append(entry)
         _ui_state['cli_output'] = _ui_state['cli_output'][-100:]
 
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = result.success
         resp['message'] = result.message
         resp['cli_output'] = _ui_state['cli_output']
@@ -256,14 +193,12 @@ def cli_execute(request):
 
 @require_POST
 def switch_workspace(request):
-    """Activate a different workspace."""
     platform = _get_platform()
     data = json.loads(request.body)
-    workspace_id = data.get('workspace_id', '')
 
     try:
-        platform.set_active_workspace(workspace_id)
-        resp = _graph_response(platform)
+        platform.set_active_workspace(data.get('workspace_id', ''))
+        resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
@@ -272,12 +207,10 @@ def switch_workspace(request):
 
 @require_POST
 def delete_workspace(request):
-    """Remove a workspace."""
     platform = _get_platform()
     data = json.loads(request.body)
-    workspace_id = data.get('workspace_id', '')
 
-    platform.remove_workspace(workspace_id)
-    resp = _graph_response(platform)
+    platform.remove_workspace(data.get('workspace_id', ''))
+    resp = _view_response(platform)
     resp['success'] = True
     return JsonResponse(resp, json_dumps_params={'default': str})

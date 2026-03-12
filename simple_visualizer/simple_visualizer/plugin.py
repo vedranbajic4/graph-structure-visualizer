@@ -216,6 +216,28 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         svg.transition().duration(300).call(zoomBehavior.transform, newT);
     }});
 
+    /* ── Listen for bird-pan-delta: viewport drag in bird view ── */
+    document.addEventListener('bird-pan-delta', (e) => {{
+        const {{ dgx, dgy }} = e.detail;
+        const currentT = d3.zoomTransform(svg.node());
+        const newT = d3.zoomIdentity
+            .translate(currentT.x - dgx * currentT.k, currentT.y - dgy * currentT.k)
+            .scale(currentT.k);
+        svg.call(zoomBehavior.transform, newT);
+    }});
+
+    /* ── Listen for bird-zoom: scroll wheel in bird view ── */
+    document.addEventListener('bird-zoom', (e) => {{
+        const {{ zoomIn }} = e.detail;
+        const currentT = d3.zoomTransform(svg.node());
+        const factor = zoomIn ? 1.15 : 1 / 1.15;
+        const newK = currentT.k * factor;
+        const newT = d3.zoomIdentity
+            .translate(width / 2 - (width / 2 - currentT.x) * factor, height / 2 - (height / 2 - currentT.y) * factor)
+            .scale(newK);
+        svg.call(zoomBehavior.transform, newT);
+    }});
+
     /* ── Arrow markers ───────────────────────────────── */
     const defs = svg.append('defs');
     // Forward arrowhead (marker-end)

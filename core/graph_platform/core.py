@@ -102,10 +102,12 @@ class GraphPlatform:
         from services.filter_service import FilterService
         from services.search_service import SearchService
         from services.serialization_service import GraphSerializer
+        from services.view_service import ViewService
 
         self._filter_service = FilterService()
         self._search_service = SearchService()
         self._serializer = GraphSerializer(self._config.serialization)
+        self._view_service = ViewService()
 
         # Observer listeners: event_name → [callback, ...]
         self._listeners: Dict[str, List[Callable[..., Any]]] = {}
@@ -394,6 +396,52 @@ class GraphPlatform:
             )
 
         return plugin.visualize(ws.current_graph)
+
+    # ── View response ─────────────────────────────────────────────
+
+    def build_view_response(
+        self,
+        visualizer_name: Optional[str] = None,
+        workspace_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Build the combined view response for all three panels
+        (Main View, Tree View, Bird View).
+
+        This centralises view-building in the core so Django and Flask
+        share identical construction logic.
+
+        Args:
+            visualizer_name: Entry-point name (e.g. 'simple', 'block').
+            workspace_id:    Target workspace (defaults to active).
+
+        Returns:
+            Dict with keys ``has_graph``, ``graph_html``, ``graph_data``,
+            ``tree_data``, ``workspace``, ``workspaces``.
+        """
+        ws = None
+        if self._active_workspace_id or workspace_id:
+            try:
+                ws = self._resolve_workspace(workspace_id)
+            except RuntimeError:
+                ws = None
+
+        graph_html = ''
+        if ws is not None:
+            vis_name = visualizer_name or self._config.default_visualizer
+            try:
+                graph_html = self.visualize(vis_name, workspace_id)
+            except Exception as exc:
+                graph_html = (
+                    f'<div class="vis-error">Visualization error: {exc}</div>'
+                )
+
+        return self._view_service.build_response(
+            graph=ws.current_graph if ws else None,
+            graph_html=graph_html,
+            workspace_dict=ws.to_dict() if ws else None,
+            workspaces=self.list_workspaces(),
+        )
 
     # ── Serialization ────────────────────────────────────────────
 
