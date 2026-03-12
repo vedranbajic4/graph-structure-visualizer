@@ -1,3 +1,10 @@
+"""
+    Flask app — thin HTTP layer over the GraphPlatform core.
+
+    All view-building logic (Main View, Tree View, Bird View) lives in
+    ``core.services.view_service.ViewService`` and is invoked through
+    ``GraphPlatform.build_view_response()``.
+"""
 import sys
 import os
 import json
@@ -39,28 +46,10 @@ URLS = {
 def _get_platform() -> GraphPlatform:
     return GraphPlatform.get_instance()
 
-def _graph_response(platform, visualizer_name=None):
-    ws = platform.get_active_workspace()
-    if ws is None:
-        return {
-            'has_graph': False,
-            'graph_html': '',
-            'graph_data': None,
-            'workspace': None,
-            'workspaces': platform.list_workspaces(),
-        }
-    vis_name = visualizer_name or _ui_state.get('visualizer', 'simple')
-    try:
-        graph_html = platform.visualize(vis_name)
-    except Exception as exc:
-        graph_html = f'<div class="vis-error">Visualization error: {exc}</div>'
-    return {
-        'has_graph': True,
-        'graph_html': graph_html,
-        'graph_data': ws.current_graph.to_dict(),
-        'workspace': ws.to_dict(),
-        'workspaces': platform.list_workspaces(),
-    }
+def _view_response(platform, visualizer_name=None):
+    """Delegate view building to the core ViewService."""
+    vis = visualizer_name or _ui_state.get('visualizer', 'simple')
+    return platform.build_view_response(visualizer_name=vis)
 
 
 # ── Page view ────────────────────────────────────────────────────
@@ -68,10 +57,11 @@ def _graph_response(platform, visualizer_name=None):
 @app.route('/')
 def index():
     platform = _get_platform()
-    ctx = _graph_response(platform)
+    ctx = _view_response(platform)
 
     graph_data_json = json.dumps(ctx.get('graph_data'), default=str) \
         if ctx.get('graph_data') else 'null'
+    tree_data_json = json.dumps(ctx.get('tree_data', []), default=str)
 
     return render_template('base.html',
         **ctx,
@@ -80,6 +70,7 @@ def index():
         active_visualizer=_ui_state.get('visualizer', 'simple'),
         cli_output=_ui_state.get('cli_output', []),
         graph_data_json=graph_data_json,
+        tree_data_json=tree_data_json,
         urls_json=json.dumps(URLS),
         csrf_token='',
     )
@@ -106,7 +97,7 @@ def upload_file():
 
     try:
         platform.load_graph(plugin_name, str(file_path), workspace_name or None)
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)
     except Exception as exc:
@@ -119,7 +110,7 @@ def switch_visualizer():
     data = request.get_json()
     name = data.get('visualizer', 'simple')
     _ui_state['visualizer'] = name
-    resp = _graph_response(platform, name)
+    resp = _view_response(platform, name)
     resp['success'] = True
     return jsonify(resp)
 
@@ -130,7 +121,7 @@ def search_graph():
     data = request.get_json()
     try:
         platform.search_graph(data.get('query', ''))
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)
     except Exception as exc:
@@ -143,7 +134,7 @@ def filter_graph():
     data = request.get_json()
     try:
         platform.filter_graph(data.get('query', ''))
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)
     except Exception as exc:
@@ -156,7 +147,7 @@ def undo_action():
     result = platform.undo()
     if result is None:
         return jsonify({'success': False, 'error': 'Nothing to undo.'})
-    resp = _graph_response(platform)
+    resp = _view_response(platform)
     resp['success'] = True
     return jsonify(resp)
 
@@ -166,7 +157,7 @@ def reset_graph():
     platform = _get_platform()
     try:
         platform.reset_workspace()
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)
     except Exception as exc:
@@ -183,7 +174,7 @@ def cli_execute():
         entry = {'command': command_text, 'message': result.message, 'success': result.success}
         _ui_state.setdefault('cli_output', []).append(entry)
         _ui_state['cli_output'] = _ui_state['cli_output'][-100:]
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = result.success
         resp['message'] = result.message
         resp['cli_output'] = _ui_state['cli_output']
@@ -198,7 +189,7 @@ def switch_workspace():
     data = request.get_json()
     try:
         platform.set_active_workspace(data.get('workspace_id', ''))
-        resp = _graph_response(platform)
+        resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)
     except Exception as exc:
@@ -210,7 +201,7 @@ def delete_workspace():
     platform = _get_platform()
     data = request.get_json()
     platform.remove_workspace(data.get('workspace_id', ''))
-    resp = _graph_response(platform)
+    resp = _view_response(platform)
     resp['success'] = True
     return jsonify(resp)
 

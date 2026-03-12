@@ -149,6 +149,7 @@
    Graph data embedded from server (for Tree View & Bird View)
    ============================================================ */
 let GRAPH_DATA = {{ graph_data_json|safe }};
+let TREE_DATA  = {{ tree_data_json|safe }};
 const URLS = {{ urls_json|safe }};
 
 
@@ -197,6 +198,9 @@ function updatePanels(data) {
     /* Graph data for Tree + Bird */
     if (data.graph_data !== undefined) {
         GRAPH_DATA = data.graph_data;
+    }
+    if (data.tree_data !== undefined) {
+        TREE_DATA = data.tree_data;
     }
 
     /* Workspace info */
@@ -335,131 +339,113 @@ function rebuildWorkspaceTabs(workspaces, activeWs) {
 }
 
 /* ============================================================
-   TREE VIEW — collapsible BFS tree from graph data
+   TREE VIEW — renders server-built tree data (from core ViewService)
+   Shows node ID, attributes on expand, connected nodes expandable.
+   Cycle references are marked by the server (is_cycle_ref).
    ============================================================ */
 function renderTreeView() {
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
 
-    if (!GRAPH_DATA || !GRAPH_DATA.nodes || GRAPH_DATA.nodes.length === 0) {
+    if (!TREE_DATA || TREE_DATA.length === 0) {
         container.innerHTML = '<p class="placeholder-text">No graph data.</p>';
         return;
     }
 
-    const nodes = GRAPH_DATA.nodes;
-    const edges = GRAPH_DATA.edges || [];
-
-    /* Build adjacency: source → [ {target, edgeId, label} ] */
-    const adj = {};
-    nodes.forEach(n => { adj[n.id] = []; });
-    edges.forEach(e => {
-        const src = (typeof e.source === 'object') ? e.source.id : e.source;
-        const tgt = (typeof e.target === 'object') ? e.target.id : e.target;
-        adj[src] = adj[src] || [];
-        adj[src].push({ target: tgt, label: e.attributes ? (e.attributes.label || '') : '' });
-        if (e.direction === 'undirected') {
-            adj[tgt] = adj[tgt] || [];
-            adj[tgt].push({ target: src, label: e.attributes ? (e.attributes.label || '') : '' });
-        }
-    });
-
-    /* Pick root = first node */
-    const rootId = nodes[0].id;
-    const nodeMap = {};
-    nodes.forEach(n => { nodeMap[n.id] = n; });
-
-    /* Build tree with BFS, cycle detection */
     const ul = document.createElement('ul');
     ul.className = 'tree-list';
 
-    function buildTreeNode(nodeId, visited) {
-        const li = document.createElement('li');
-        const n = nodeMap[nodeId];
-        if (!n) return li;
-
-        const children = (adj[nodeId] || []).filter(c => !visited.has(c.target));
-        const hasChildren = children.length > 0;
-
-        /* Toggle button */
-        const toggle = document.createElement('span');
-        toggle.className = 'tree-toggle';
-        toggle.textContent = hasChildren ? '+' : ' ';
-
-        /* Label */
-        const label = document.createElement('span');
-        label.className = 'tree-label';
-        const name = n.attributes ? (n.attributes.Name || n.attributes.name || n.attributes.label || n.id) : n.id;
-        label.textContent = name;
-        label.title = nodeId;
-
-        /* Click to select */
-        label.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll('.tree-label.selected').forEach(el => el.classList.remove('selected'));
-            label.classList.add('selected');
-            highlightNodeAllViews(nodeId);
-        };
-
-        li.appendChild(toggle);
-        li.appendChild(label);
-
-        /* Lazy expand */
-        if (hasChildren) {
-            let expanded = false;
-            let childUl = null;
-            toggle.onclick = (e) => {
-                e.stopPropagation();
-                if (!expanded) {
-                    childUl = document.createElement('ul');
-                    childUl.className = 'tree-list';
-                    const newVisited = new Set(visited);
-                    newVisited.add(nodeId);
-                    children.forEach(c => {
-                        newVisited.add(c.target);
-                    });
-                    const childVisited = new Set(visited);
-                    childVisited.add(nodeId);
-                    children.forEach(c => {
-                        childUl.appendChild(buildTreeNode(c.target, new Set(childVisited)));
-                        childVisited.add(c.target);
-                    });
-                    li.appendChild(childUl);
-                    toggle.textContent = '−';
-                    expanded = true;
-                } else {
-                    li.removeChild(childUl);
-                    toggle.textContent = '+';
-                    expanded = false;
-                }
-            };
-        }
-
-        return li;
-    }
-
-    const rootVisited = new Set();
-    rootVisited.add(rootId);
-    ul.appendChild(buildTreeNode(rootId, rootVisited));
-
-    /* Add disconnected nodes */
-    const reachable = new Set([rootId]);
-    const queue = [rootId];
-    while (queue.length) {
-        const cur = queue.shift();
-        (adj[cur] || []).forEach(c => {
-            if (!reachable.has(c.target)) {
-                reachable.add(c.target);
-                queue.push(c.target);
-            }
-        });
-    }
-    nodes.forEach(n => {
-        if (!reachable.has(n.id)) {
-            ul.appendChild(buildTreeNode(n.id, new Set()));
-        }
+    TREE_DATA.forEach(rootNode => {
+        ul.appendChild(buildTreeNodeFromData(rootNode));
     });
 
     container.appendChild(ul);
+}
+
+/**
+ * Recursively build a DOM <li> from a server-provided tree node object.
+ *
+ * Each node shows its ID. Expanding reveals:
+ *   - Attributes (key: value pairs)
+ *   - Connected nodes (themselves expandable)
+ *
+ * Cycle references (is_cycle_ref === true) are shown but not expandable.
+ */
+function buildTreeNodeFromData(nodeData) {
+    const li = document.createElement('li');
+
+    const hasAttrs = nodeData.attributes && Object.keys(nodeData.attributes).length > 0;
+    const hasConns = nodeData.connections && nodeData.connections.length > 0;
+    const expandable = !nodeData.is_cycle_ref && (hasAttrs || hasConns);
+
+    /* Toggle button */
+    const toggle = document.createElement('span');
+    toggle.className = 'tree-toggle';
+    toggle.textContent = expandable ? '+' : ' ';
+
+    /* Label — show human-readable name, fall back to ID */
+    const label = document.createElement('span');
+    label.className = 'tree-label';
+    label.textContent = nodeData.display_name || nodeData.id;
+    label.title = nodeData.id;
+
+    if (nodeData.is_cycle_ref) {
+        label.classList.add('cycle-ref');
+        label.textContent = nodeData.id + ' ↻';
+    }
+
+    /* Click to select across all views */
+    label.onclick = (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.tree-label.selected').forEach(el => el.classList.remove('selected'));
+        label.classList.add('selected');
+        highlightNodeAllViews(nodeData.id);
+    };
+
+    li.appendChild(toggle);
+    li.appendChild(label);
+
+    /* Lazy expand */
+    if (expandable) {
+        let expanded = false;
+        let childUl = null;
+
+        toggle.onclick = (e) => {
+            e.stopPropagation();
+            if (!expanded) {
+                childUl = document.createElement('ul');
+                childUl.className = 'tree-list';
+
+                /* Attributes — plain text lines, no box */
+                if (hasAttrs) {
+                    for (const [key, val] of Object.entries(nodeData.attributes)) {
+                        const attrLi = document.createElement('li');
+                        attrLi.className = 'tree-attr';
+                        attrLi.textContent = key + ': ' + (val !== null ? val : 'null');
+                        childUl.appendChild(attrLi);
+                    }
+                }
+
+                /* Connected nodes — each as its own expandable li */
+                if (hasConns) {
+                    nodeData.connections.forEach(conn => {
+                        childUl.appendChild(buildTreeNodeFromData(conn.node));
+                    });
+                }
+
+                li.appendChild(childUl);
+                toggle.textContent = '−';
+                expanded = true;
+            } else {
+                li.removeChild(childUl);
+                childUl = null;
+                toggle.textContent = '+';
+                expanded = false;
+            }
+        };
+    }
+
+    return li;
 }
 
 /* ============================================================
@@ -491,12 +477,37 @@ function renderBirdView() {
     const linkGroup = g.append('g');
     const nodeGroup = g.append('g');
 
-    /* Viewport rect — always on top, not inside g so it's never transformed */
+    /* Viewport rect — on top of g, draggable */
     const viewport = svg.append('rect')
-        .attr('fill', 'rgba(230,126,34,0.10)')
+        .attr('fill', 'rgba(230,126,34,0.15)')
         .attr('stroke', '#e67e22').attr('stroke-width', 1.5).attr('rx', 2)
-        .style('pointer-events', 'none')
-        .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h);
+        .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h)
+        .style('cursor', 'move');
+
+    /* ── Viewport drag → pan main view ── */
+    let lastMainTransform = { x: 0, y: 0, k: 1 };
+    let lastViewWidth = w, lastViewHeight = h;
+
+    const vpDrag = d3.drag()
+        .on('drag', function(event) {
+            /* Convert bird-pixel delta to graph-coord delta */
+            const dgx = event.dx / fitK;
+            const dgy = event.dy / fitK;
+            /* Tell main view to pan by that amount in graph coords */
+            document.dispatchEvent(new CustomEvent('bird-pan-delta', {
+                detail: { dgx, dgy }
+            }));
+        });
+    viewport.call(vpDrag);
+
+    /* ── Scroll on bird view → zoom main view ── */
+    svg.on('wheel', function(event) {
+        event.preventDefault();
+        const zoomIn = event.deltaY < 0;
+        document.dispatchEvent(new CustomEvent('bird-zoom', {
+            detail: { zoomIn }
+        }));
+    });
 
     const color = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -585,6 +596,9 @@ function renderBirdView() {
         if (window._birdGeneration !== myGen) return; /* stale listener */
 
         const { positions, edges, mainTransform, viewWidth, viewHeight } = e.detail;
+        lastMainTransform = mainTransform;
+        lastViewWidth = viewWidth;
+        lastViewHeight = viewHeight;
         nodeById = {};
         positions.forEach(p => { nodeById[p.id] = p; });
 
@@ -632,8 +646,8 @@ function renderBirdView() {
     /* Click bird view → pan main view */
     svg.on('click', function(event) {
         if (window._birdGeneration !== myGen) return;
+        if (event.target === viewport.node()) return; /* don't navigate when dragging viewport */
         const [cx, cy] = d3.pointer(event, svg.node());
-        /* Invert bird pixels → graph coords */
         const graphX = (cx - fitTx) / fitK;
         const graphY = (cy - fitTy) / fitK;
         document.dispatchEvent(new CustomEvent('bird-navigate', {
@@ -648,30 +662,11 @@ function renderBirdView() {
    Cross-view node selection sync
    ============================================================ */
 
-/* Build a map: display label → nodeId, from GRAPH_DATA */
-function buildLabelToIdMap() {
-    const map = {};
-    if (!GRAPH_DATA || !GRAPH_DATA.nodes) return map;
-    GRAPH_DATA.nodes.forEach(n => {
-        const label = n.attributes
-            ? (n.attributes.Name || n.attributes.name || n.attributes.label || n.id)
-            : n.id;
-        map[label] = n.id;
-    });
-    return map;
-}
-
 function highlightNodeAllViews(nodeId) {
-    const labelToId = buildLabelToIdMap();
-
-    /* Main View — find circle whose sibling .sv-label text maps to nodeId */
+    /* Main View */
     document.querySelectorAll('.sv-node-circle').forEach(circle => {
         const id = circle.parentElement.dataset.nodeId;
         circle.classList.toggle('selected', id === nodeId);
-        // const labelEl = circle.parentElement.querySelector('.sv-label');
-        // if (!labelEl) return;
-        // const id = labelToId[labelEl.textContent.trim()];
-        // circle.classList.toggle('selected', id === nodeId);
     });
 
     /* Tree View */
@@ -684,19 +679,14 @@ function highlightNodeAllViews(nodeId) {
         window._birdView.svg.selectAll('circle')
             .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
             .attr('r',    d => d.id === nodeId ? 5 : 3);
-
-        window._birdView.svg.selectAll('circle')
-            .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
-            .attr('r',    d => d.id === nodeId ? 5 : 3);
     }
 }
 
 /* Attach click listeners to main view circles after render */
 function attachMainViewNodeClicks() {
-    const labelToId = buildLabelToIdMap();
     document.querySelectorAll('.sv-node-circle').forEach(circle => {
         const g = circle.parentElement;
-        const nodeId = circle.parentElement.dataset.nodeId;
+        const nodeId = g.dataset.nodeId;
         if (!nodeId) return;
         g.style.cursor = 'pointer';
         g.addEventListener('click', (e) => {
@@ -705,12 +695,12 @@ function attachMainViewNodeClicks() {
         });
     });
 }
+
 // ── Drop-in replacement for innerHTML that also runs injected scripts ──
 function setHTMLAndRunScripts(el, html) {
     el.innerHTML = html;
     Array.from(el.querySelectorAll('script')).forEach(oldScript => {
         const newScript = document.createElement('script');
-        // Copy any attributes (e.g. type, src)
         Array.from(oldScript.attributes).forEach(attr =>
             newScript.setAttribute(attr.name, attr.value)
         );
@@ -718,33 +708,21 @@ function setHTMLAndRunScripts(el, html) {
         oldScript.parentNode.replaceChild(newScript, oldScript);
     });
 }
-/* ============================================================
-   Initial render of Tree + Bird views on page load
-   ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-    renderTreeView();
-    renderBirdView();
-    attachMainViewNodeClicks(); // attach after main view is already in DOM
-});
-/* ============================================================
-   Keyboard shortcuts
-   ============================================================ */
-document.addEventListener('keydown', (e) => {
-    /* Enter in search or filter fields */
-    if (e.key === 'Enter' && e.target.id === 'search-input') doSearch();
-    if (e.key === 'Enter' && e.target.id === 'filter-input') doFilter();
-});
 
 /* ============================================================
-   Initial render of Tree + Bird views on page load
+   Initial render + keyboard shortcuts
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     renderTreeView();
     renderBirdView();
+    attachMainViewNodeClicks();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.id === 'search-input') doSearch();
+    if (e.key === 'Enter' && e.target.id === 'filter-input') doFilter();
 });
 </script>
 
 </body>
 </html>
-
-
