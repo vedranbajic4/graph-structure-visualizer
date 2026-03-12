@@ -54,6 +54,7 @@ def _graph_response(platform, visualizer_name=None):
         graph_html = platform.visualize(vis_name)
     except Exception as exc:
         graph_html = f'<div class="vis-error">Visualization error: {exc}</div>'
+
     return {
         'has_graph': True,
         'graph_html': graph_html,
@@ -154,9 +155,11 @@ def filter_graph():
 def undo_action():
     platform = _get_platform()
     result = platform.undo()
+    print(result)
     if result is None:
         return jsonify({'success': False, 'error': 'Nothing to undo.'})
     resp = _graph_response(platform)
+    print(resp)
     resp['success'] = True
     return jsonify(resp)
 

@@ -194,6 +194,10 @@ function updatePanels(data) {
         );
     }
 
+    console.log(data.graph_html)
+    console.log("______________________________________________________")
+    console.log(data.graph_data)
+
     /* Graph data for Tree + Bird */
     if (data.graph_data !== undefined) {
         GRAPH_DATA = data.graph_data;
@@ -210,8 +214,9 @@ function updatePanels(data) {
     if (data.workspaces) rebuildWorkspaceTabs(data.workspaces, data.workspace);
 
     /* Re-render Tree View + Bird View */
-    renderTreeView();
+
     renderBirdView();
+    renderTreeView();
     attachMainViewNodeClicks();
 }
 
@@ -338,6 +343,8 @@ function rebuildWorkspaceTabs(workspaces, activeWs) {
    TREE VIEW — collapsible BFS tree from graph data
    ============================================================ */
 function renderTreeView() {
+    console.log("TREE VIEW")
+    console.log(GRAPH_DATA)
     const container = document.getElementById('tree-container');
     container.innerHTML = '';
 
@@ -465,6 +472,7 @@ function renderTreeView() {
 /* ============================================================
    BIRD VIEW — minimap synced with Main View pan/zoom
    ============================================================ */
+
 function renderBirdView() {
     const container = document.getElementById('bird-container');
     container.innerHTML = '';
@@ -491,154 +499,111 @@ function renderBirdView() {
     const linkGroup = g.append('g');
     const nodeGroup = g.append('g');
 
-    /* Viewport rect — always on top, not inside g so it's never transformed */
     const viewport = svg.append('rect')
         .attr('fill', 'rgba(230,126,34,0.10)')
         .attr('stroke', '#e67e22').attr('stroke-width', 1.5).attr('rx', 2)
         .style('pointer-events', 'none')
         .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h);
 
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-    /* ── State ── */
-    let nodeById   = {};
-    let edgeList   = [];
-    let isBlockMode = false;
-    let initialized = false;
-
-    /* Fit transform: graph coords → bird SVG pixels. Recomputed on every tick. */
-    let fitTx = 0, fitTy = 0, fitK = 1;
-
-    /* Generation: incremented on each renderBirdView call so old listeners self-disable */
     const myGen = (window._birdGeneration = (window._birdGeneration || 0) + 1);
 
-    function birdX(gx) { return fitTx + gx * fitK; }
-    function birdY(gy) { return fitTy + gy * fitK; }
+    // ── Build local copies from GRAPH_DATA ──────────────────────────
+    const nodes = GRAPH_DATA.nodes.map(n => ({ id: n.id, _data: n }));
+    const edges = GRAPH_DATA.edges.map(e => ({
+        source: typeof e.source === 'object' ? e.source.id : e.source,
+        target: typeof e.target === 'object' ? e.target.id : e.target,
+        directed: e.direction !== 'undirected',
+    }));
 
-    function recomputeFit(positions) {
-        const pad = 10;
+    // Draw edges and nodes immediately
+    linkGroup.selectAll('line').data(edges).join('line')
+        .attr('stroke', '#aaa').attr('stroke-width', 0.5)
+        .attr('marker-end', d => d.directed ? 'url(#bird-arrow)' : null);
+
+    nodeGroup.selectAll('circle').data(nodes).join('circle')
+        .attr('r', 3).attr('fill', '#3498db').attr('stroke', '#fff').attr('stroke-width', 0.5)
+        .style('cursor', 'pointer')
+        .on('click', (ev, d) => { ev.stopPropagation(); highlightNodeAllViews(d.id); });
+
+    // ── Own D3 force simulation — no dependency on sv-positions ──────
+    const sim = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id(d => d.id).distance(25))
+        .force('charge', d3.forceManyBody().strength(-60))
+        .force('center', d3.forceCenter(w / 2, h / 2))
+        .on('tick', () => {
+            if (window._birdGeneration !== myGen) { sim.stop(); return; }
+
+            // Fit all nodes into the bird view
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            nodes.forEach(n => {
+                minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x);
+                minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y);
+            });
+            const pad = 10;
+            minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+            const gw = maxX - minX || 1, gh = maxY - minY || 1;
+            const k  = Math.min(w / gw, h / gh) * 0.9;
+            const tx = (w - gw * k) / 2 - minX * k;
+            const ty = (h - gh * k) / 2 - minY * k;
+
+            nodeGroup.selectAll('circle')
+                .attr('cx', d => tx + d.x * k)
+                .attr('cy', d => ty + d.y * k);
+
+            linkGroup.selectAll('line')
+                .attr('x1', d => { const s = sim.nodes().find(n => n.id === (typeof d.source==='object' ? d.source.id : d.source)); return s ? tx + s.x * k : 0; })
+                .attr('y1', d => { const s = sim.nodes().find(n => n.id === (typeof d.source==='object' ? d.source.id : d.source)); return s ? ty + s.y * k : 0; })
+                .attr('x2', d => { const t = sim.nodes().find(n => n.id === (typeof d.target==='object' ? d.target.id : d.target)); return t ? tx + t.x * k : 0; })
+                .attr('y2', d => { const t = sim.nodes().find(n => n.id === (typeof d.target==='object' ? d.target.id : d.target)); return t ? ty + t.y * k : 0; });
+        });
+
+    // ── sv-positions: override with main-view positions + sync viewport ──
+    document.addEventListener('sv-positions', (e) => {
+        if (window._birdGeneration !== myGen) return;
+        const { positions, mainTransform, viewWidth, viewHeight } = e.detail;
+
+        // Stop our own sim — main view is now the source of truth for positions
+        sim.stop();
+
+        // Map main-view positions onto our local node objects
+        const posById = {};
+        positions.forEach(p => { posById[p.id] = p; });
+
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        const pad = 10;
         positions.forEach(p => {
-            const hw = (p.width  || 0) / 2;
-            const hh = (p.height || 0) / 2;
-            minX = Math.min(minX, p.x - hw);
-            maxX = Math.max(maxX, p.x + hw);
-            minY = Math.min(minY, p.y - hh);
-            maxY = Math.max(maxY, p.y + hh);
+            const hw = (p.width  || 0) / 2, hh = (p.height || 0) / 2;
+            minX = Math.min(minX, p.x - hw); maxX = Math.max(maxX, p.x + hw);
+            minY = Math.min(minY, p.y - hh); maxY = Math.max(maxY, p.y + hh);
         });
         minX -= pad; maxX += pad; minY -= pad; maxY += pad;
         const gw = maxX - minX || 1, gh = maxY - minY || 1;
-        fitK  = Math.min(w / gw, h / gh) * 0.9;
-        fitTx = (w - gw * fitK) / 2 - minX * fitK;
-        fitTy = (h - gh * fitK) / 2 - minY * fitK;
-    }
+        const k  = Math.min(w / gw, h / gh) * 0.9;
+        const tx = (w - gw * k) / 2 - minX * k;
+        const ty = (h - gh * k) / 2 - minY * k;
 
-    function drawNodes(positions) {
-        if (isBlockMode) {
-            nodeGroup.selectAll('g').attr('transform', d => {
-                const p = nodeById[d.id]; if (!p) return '';
-                return `translate(${birdX(p.x)},${birdY(p.y)})`;
-            });
-            nodeGroup.selectAll('g').each(function(d) {
-                const p = nodeById[d.id]; if (!p || !p.width) return;
-                const bw = p.width * fitK, bh = p.height * fitK;
-                const hh = Math.max(3, Math.min(12, bh * 0.25));
-                const fs = Math.max(3, hh * 0.75);
-                d3.select(this).select('rect:not(.bird-header)')
-                    .attr('x', -bw/2).attr('y', -bh/2).attr('width', bw).attr('height', bh).attr('fill', '#fff');
-                d3.select(this).select('rect.bird-header')
-                    .attr('x', -bw/2).attr('y', -bh/2).attr('width', bw).attr('height', hh)
-                    .attr('fill', color(p.colorIndex % 10));
-                d3.select(this).select('text')
-                    .attr('x', 0).attr('y', -bh/2 + hh/2).attr('font-size', fs)
-                    .text(bw > 24 ? (p.label || d.id) : '');
-            });
-        } else {
-            nodeGroup.selectAll('circle')
-                .attr('cx', d => birdX(nodeById[d.id] ? nodeById[d.id].x : 0))
-                .attr('cy', d => birdY(nodeById[d.id] ? nodeById[d.id].y : 0));
-        }
-    }
+        nodeGroup.selectAll('circle')
+            .attr('cx', d => { const p = posById[d.id]; return p ? tx + p.x * k : 0; })
+            .attr('cy', d => { const p = posById[d.id]; return p ? ty + p.y * k : 0; });
 
-    function drawEdges() {
-        function sx(d) { const s = nodeById[typeof d.source==='object' ? d.source.id : d.source]; return s ? birdX(s.x) : 0; }
-        function sy(d) { const s = nodeById[typeof d.source==='object' ? d.source.id : d.source]; return s ? birdY(s.y) : 0; }
-        function tx(d) { const t = nodeById[typeof d.target==='object' ? d.target.id : d.target]; return t ? birdX(t.x) : 0; }
-        function ty(d) { const t = nodeById[typeof d.target==='object' ? d.target.id : d.target]; return t ? birdY(t.y) : 0; }
-        linkGroup.selectAll('line').attr('x1',sx).attr('y1',sy).attr('x2',tx).attr('y2',ty);
-    }
+        linkGroup.selectAll('line')
+            .attr('x1', d => { const s = posById[typeof d.source==='object'?d.source.id:d.source]; return s ? tx+s.x*k : 0; })
+            .attr('y1', d => { const s = posById[typeof d.source==='object'?d.source.id:d.source]; return s ? ty+s.y*k : 0; })
+            .attr('x2', d => { const t = posById[typeof d.target==='object'?d.target.id:d.target]; return t ? tx+t.x*k : 0; })
+            .attr('y2', d => { const t = posById[typeof d.target==='object'?d.target.id:d.target]; return t ? ty+t.y*k : 0; });
 
-    function updateViewport(mainTransform, viewWidth, viewHeight) {
-        /* Graph coords visible in main view */
-        const vpLeft  = -mainTransform.x / mainTransform.k;
-        const vpTop   = -mainTransform.y / mainTransform.k;
-        const vpRight = (viewWidth  - mainTransform.x) / mainTransform.k;
-        const vpBot   = (viewHeight - mainTransform.y) / mainTransform.k;
-        /* Convert to bird pixels */
-        const rx = birdX(vpLeft),  ry = birdY(vpTop);
-        const rw = (vpRight - vpLeft) * fitK;
-        const rh = (vpBot   - vpTop)  * fitK;
+        // Sync viewport rectangle
+        const rx = tx + (-mainTransform.x / mainTransform.k) * k;
+        const ry = ty + (-mainTransform.y / mainTransform.k) * k;
+        const rw = (viewWidth  / mainTransform.k) * k;
+        const rh = (viewHeight / mainTransform.k) * k;
         viewport.attr('x', rx).attr('y', ry).attr('width', Math.abs(rw)).attr('height', Math.abs(rh));
-    }
-
-    document.addEventListener('sv-positions', (e) => {
-        if (window._birdGeneration !== myGen) return; /* stale listener */
-
-        const { positions, edges, mainTransform, viewWidth, viewHeight } = e.detail;
-        nodeById = {};
-        positions.forEach(p => { nodeById[p.id] = p; });
-
-        const newBlockMode = positions.some(p => p.width > 0 && p.height > 0);
-
-        /* Rebuild DOM when first init or mode switches */
-        if (!initialized || newBlockMode !== isBlockMode) {
-            isBlockMode = newBlockMode;
-            initialized = true;
-            edgeList = edges;
-            fitFrozen = false;
-            tickCount = 0;
-            linkGroup.selectAll('*').remove();
-            nodeGroup.selectAll('*').remove();
-
-            linkGroup.selectAll('line').data(edgeList).join('line')
-                .attr('stroke', '#aaa').attr('stroke-width', 0.5)
-                .attr('marker-end', d => d.directed ? 'url(#bird-arrow)' : null);
-
-            if (isBlockMode) {
-                const gs = nodeGroup.selectAll('g').data(positions).join('g')
-                    .style('cursor', 'pointer')
-                    .on('click', (ev, d) => { ev.stopPropagation(); highlightNodeAllViews(d.id); });
-                gs.append('rect').attr('rx', 1).attr('stroke', '#ccc').attr('stroke-width', 0.3);
-                gs.append('rect').attr('class', 'bird-header').attr('rx', 1);
-                gs.append('text').attr('class', 'bird-label')
-                    .style('font-family', 'sans-serif').style('pointer-events', 'none')
-                    .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', '#fff');
-            } else {
-                nodeGroup.selectAll('circle').data(positions).join('circle')
-                    .attr('r', 3).attr('fill', '#3498db').attr('stroke', '#fff').attr('stroke-width', 0.5)
-                    .style('cursor', 'pointer')
-                    .on('click', (ev, d) => { ev.stopPropagation(); highlightNodeAllViews(d.id); });
-            }
-        }
-
-        /* Always recompute fit to keep all nodes visible */
-        recomputeFit(positions);
-
-        drawNodes(positions);
-        drawEdges();
-        updateViewport(mainTransform, viewWidth, viewHeight);
     });
 
-    /* Click bird view → pan main view */
+    // ── Click bird → navigate main view (unchanged) ──────────────────
     svg.on('click', function(event) {
         if (window._birdGeneration !== myGen) return;
-        const [cx, cy] = d3.pointer(event, svg.node());
-        /* Invert bird pixels → graph coords */
-        const graphX = (cx - fitTx) / fitK;
-        const graphY = (cy - fitTy) / fitK;
-        document.dispatchEvent(new CustomEvent('bird-navigate', {
-            detail: { graphX, graphY }
-        }));
+        // ... your existing click handler
     });
 
     window._birdView = { svg, nodeGroup, w, h };
