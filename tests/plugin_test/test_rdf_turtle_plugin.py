@@ -141,12 +141,12 @@ class TestEdgeParsing:
 class TestErrorHandling:
     def test_invalid_file_path_raises(self, plugin):
         with pytest.raises(Exception):
-            plugin.parse("nonexistent/path/file.ttl")
+            plugin.parse(file_path="nonexistent/path/file.ttl")
 
     def test_empty_ttl_file_returns_empty_graph(self, plugin, tmp_path):
         empty_ttl = tmp_path / "empty.ttl"
         empty_ttl.write_text("")
-        graph = plugin.parse(str(empty_ttl))
+        graph = plugin.parse(file_path=str(empty_ttl))
         assert graph.get_number_of_nodes() == 0
         assert graph.get_number_of_edges() == 0
 
@@ -157,6 +157,6 @@ class TestErrorHandling:
             '@prefix ex: <http://example.org/> .\n'
             'ex:Node1 ex:name "OnlyLiterals" .\n'
         )
-        graph = plugin.parse(str(ttl))
+        graph = plugin.parse(file_path=str(ttl))
         assert graph.get_number_of_edges() == 0
         assert graph.get_number_of_nodes() == 1

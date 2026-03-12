@@ -22,12 +22,12 @@ from api.plugins.base import VisualizerPlugin
 
 class BlockVisualizerPlugin(VisualizerPlugin):
     """
-    Visualizes a graph using simple circles (nodes) and lines (edges)
+    Visualizes a graph as block tables (nodes) and lines (edges)
     with a D3.js force-directed layout.
     """
 
     def get_plugin_name(self) -> str:
-        return "Simple Visualizer"
+        return "Block Visualizer"
 
     # ── Public API ───────────────────────────────────────────────
 

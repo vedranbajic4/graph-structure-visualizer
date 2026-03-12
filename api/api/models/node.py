@@ -2,15 +2,16 @@
     Node model - representation of a node in the graph
 """
 from typing import Dict, Any, Optional
-from abc import ABC
 from datetime import date, datetime
 from ..types import ValueType, TypeValidator
 
 
-class Node(ABC):
+class Node:
     """
-    Abstract class for a node in the graph.
+    Represents a node in the graph.
     Each node has an ID and arbitrary attributes.
+    
+    Supports multiple value types: int, str, float, date (per spec §2.1).
     """
 
     def __init__(self, node_id: Any, **attributes):

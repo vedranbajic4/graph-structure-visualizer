@@ -96,7 +96,7 @@ def upload_file():
     uploaded_file.save(str(file_path))
 
     try:
-        platform.load_graph(plugin_name, str(file_path), workspace_name or None)
+        platform.load_graph(plugin_name, workspace_name or None, file_path=str(file_path))
         resp = _view_response(platform)
         resp['success'] = True
         return jsonify(resp)

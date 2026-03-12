@@ -17,4 +17,4 @@ def sample_ttl_path():
 
 @pytest.fixture
 def parsed_graph(plugin, sample_ttl_path):
-    return plugin.parse(sample_ttl_path)
+    return plugin.parse(file_path=sample_ttl_path)

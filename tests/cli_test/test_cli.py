@@ -104,21 +104,6 @@ class TestCreateNodeCommand:
         cmd = CreateNodeCommand("n1")
         assert cmd.supports_undo is True
 
-    def test_create_node_undo(self):
-        g = _empty_graph()
-        cmd = CreateNodeCommand("n1", {"X": "1"})
-        cmd.execute(g)
-        assert g.get_number_of_nodes() == 1
-        r = cmd.undo(g)
-        assert r.success is True
-        assert g.get_number_of_nodes() == 0
-
-    def test_create_node_undo_nonexistent(self):
-        g = _empty_graph()
-        cmd = CreateNodeCommand("n1")
-        r = cmd.undo(g)
-        assert r.success is False
-
 
 class TestEditNodeCommand:
 
@@ -135,25 +120,6 @@ class TestEditNodeCommand:
         r = EditNodeCommand("x", {"Name": "X"}).execute(g)
         assert r.success is False
         assert "not found" in r.message
-
-    def test_edit_node_undo_restores_old_value(self):
-        g = _empty_graph()
-        CreateNodeCommand("n1", {"Name": "Alice"}).execute(g)
-        cmd = EditNodeCommand("n1", {"Name": "Bob"})
-        cmd.execute(g)
-        assert g.get_node("n1").get_attribute("Name") == "Bob"
-        cmd.undo(g)
-        assert g.get_node("n1").get_attribute("Name") == "Alice"
-
-    def test_edit_node_undo_removes_new_attribute(self):
-        g = _empty_graph()
-        CreateNodeCommand("n1", {"Name": "Alice"}).execute(g)
-        cmd = EditNodeCommand("n1", {"Color": "blue"})
-        cmd.execute(g)
-        assert g.get_node("n1").get_attribute("Color") == "blue"
-        cmd.undo(g)
-        # Color was not present before, undo should delete it
-        assert g.get_node("n1").get_attribute("Color") is None
 
     def test_edit_node_supports_undo(self):
         assert EditNodeCommand("n1", {"X": "1"}).supports_undo is True
@@ -178,26 +144,6 @@ class TestDeleteNodeCommand:
         r = DeleteNodeCommand("A").execute(g)
         assert r.success is False
         assert "connected edge" in r.message
-
-    def test_delete_node_undo_restores(self):
-        g = _empty_graph()
-        CreateNodeCommand("n1", {"Name": "Alice"}).execute(g)
-        cmd = DeleteNodeCommand("n1")
-        cmd.execute(g)
-        assert g.get_node("n1") is None
-        r = cmd.undo(g)
-        assert r.success is True
-        assert g.get_node("n1") is not None
-
-    def test_delete_node_undo_already_exists(self):
-        g = _empty_graph()
-        CreateNodeCommand("n1").execute(g)
-        cmd = DeleteNodeCommand("n1")
-        cmd.execute(g)
-        CreateNodeCommand("n1").execute(g)  # re-create
-        r = cmd.undo(g)
-        assert r.success is False
-        assert "already exists" in r.message
 
     def test_delete_node_supports_undo(self):
         assert DeleteNodeCommand("n1").supports_undo is True
@@ -248,22 +194,8 @@ class TestCreateEdgeCommand:
         assert r.success is False
         assert "already exists" in r.message
 
-    def test_create_edge_undo(self):
-        g = _empty_graph()
-        CreateNodeCommand("A").execute(g)
-        CreateNodeCommand("B").execute(g)
-        cmd = CreateEdgeCommand("e1", "A", "B")
-        cmd.execute(g)
-        assert g.get_number_of_edges() == 1
-        r = cmd.undo(g)
-        assert r.success is True
-        assert g.get_number_of_edges() == 0
-
-    def test_create_edge_undo_not_found(self):
-        g = _empty_graph()
-        cmd = CreateEdgeCommand("e1", "A", "B")
-        r = cmd.undo(g)
-        assert r.success is False
+    def test_create_edge_supports_undo(self):
+        assert CreateEdgeCommand("e1", "A", "B").supports_undo is True
 
 
 class TestEditEdgeCommand:
@@ -279,13 +211,6 @@ class TestEditEdgeCommand:
         g = _empty_graph()
         r = EditEdgeCommand("x", {"W": "1"}).execute(g)
         assert r.success is False
-
-    def test_edit_edge_undo(self):
-        g = _small_graph()
-        cmd = EditEdgeCommand("e1", {"Relation": "enemy"})
-        cmd.execute(g)
-        cmd.undo(g)
-        assert g.get_edge("e1").get_attribute("Relation") == "friend"
 
     def test_edit_edge_supports_undo(self):
         assert EditEdgeCommand("e1", {"W": "1"}).supports_undo is True
@@ -304,36 +229,8 @@ class TestDeleteEdgeCommand:
         r = DeleteEdgeCommand("x").execute(g)
         assert r.success is False
 
-    def test_delete_edge_undo_restores(self):
-        g = _small_graph()
-        cmd = DeleteEdgeCommand("e1")
-        cmd.execute(g)
-        assert g.get_edge("e1") is None
-        r = cmd.undo(g)
-        assert r.success is True
-        assert g.get_edge("e1") is not None
-
-    def test_delete_edge_undo_already_exists(self):
-        g = _small_graph()
-        cmd = DeleteEdgeCommand("e1")
-        cmd.execute(g)
-        # Re-create same id
-        CreateEdgeCommand("e1", "A", "B").execute(g)
-        r = cmd.undo(g)
-        assert r.success is False
-
-    def test_delete_edge_undo_endpoint_removed(self):
-        g = _empty_graph()
-        CreateNodeCommand("A").execute(g)
-        CreateNodeCommand("B").execute(g)
-        CreateEdgeCommand("e1", "A", "B").execute(g)
-        cmd = DeleteEdgeCommand("e1")
-        cmd.execute(g)
-        # Remove one endpoint
-        DeleteNodeCommand("A").execute(g)
-        r = cmd.undo(g)
-        assert r.success is False
-        assert "endpoint" in r.message
+    def test_delete_edge_supports_undo(self):
+        assert DeleteEdgeCommand("e1").supports_undo is True
 
 
 # ═════════════════════════════════════════════════════════════════
@@ -395,15 +292,6 @@ class TestClearCommand:
         g = _empty_graph()
         r = ClearCommand().execute(g)
         assert r.success is True
-
-    def test_clear_undo_restores(self):
-        g = _small_graph()
-        cmd = ClearCommand()
-        cmd.execute(g)
-        r = cmd.undo(g)
-        assert r.success is True
-        assert r.graph.get_number_of_nodes() == 3
-        assert r.graph.get_number_of_edges() == 2
 
     def test_clear_supports_undo(self):
         assert ClearCommand().supports_undo is True
@@ -947,12 +835,10 @@ class TestEdgeCases:
         proc.process("delete node --id=A", g)
         assert g.get_number_of_nodes() == 1
 
-    def test_base_command_undo_not_supported(self):
-        """Command base class undo returns failure."""
-        g = _empty_graph()
-        r = HelpCommand().undo(g)
-        assert r.success is False
-        assert "not supported" in r.message.lower()
+    def test_base_command_no_undo_method(self):
+        """Command base class no longer has undo method - undo handled by processor."""
+        cmd = HelpCommand()
+        assert not hasattr(cmd, 'undo') or cmd.supports_undo is False
 
     def test_processor_is_independent_per_instance(self):
         p1 = CommandProcessor()

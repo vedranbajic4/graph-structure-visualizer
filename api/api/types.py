@@ -29,9 +29,12 @@ class TypeValidator:
         elif isinstance(value, (date, datetime)):
             return ValueType.DATE
         elif isinstance(value, str):
-            # Try parsing as int or date
-            if value.isdigit():
+            # Try int first (handles negatives: "-42", "+5")
+            try:
+                int(value)
                 return ValueType.INT
+            except ValueError:
+                pass
             try:
                 float(value)
                 return ValueType.FLOAT
@@ -88,6 +91,14 @@ class TypeValidator:
 
         if operator not in operators:
             raise ValueError(f"Unknown operator: {operator}")
+
+        # BOOL only supports equality checks; ordering is undefined
+        if isinstance(value1, bool) or isinstance(value2, bool):
+            if operator not in ('==', '!='):
+                raise TypeError(
+                    f"Operator '{operator}' is not supported for boolean values. "
+                    f"Use '==' or '!='."
+                )
 
         try:
             return operators[operator](value1, value2)

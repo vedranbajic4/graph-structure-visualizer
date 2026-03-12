@@ -87,7 +87,10 @@ class FilterService(GraphQueryService[str]):
         try:
             target_val = TypeValidator.convert_to_type(target_value_str, attr_type)
             return TypeValidator.compare(node_val, target_val, operator)
-        except (ValueError, TypeError):
+        except TypeError as e:
+            raise FilterTypeError(str(e))
+        except ValueError:
             raise FilterTypeError(
-                f"Incompatible type for attribute '{attr_name}'."
+                f"Value '{target_value_str}' is incompatible with "
+                f"the type of attribute '{attr_name}' ({attr_type.value})."
             )

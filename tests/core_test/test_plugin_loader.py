@@ -34,7 +34,11 @@ class MockDataSourcePlugin(DataSourcePlugin):
     def get_plugin_name(self) -> str:
         return "mock_ds"
 
-    def parse(self, file_path: str) -> Graph:
+    def get_parameters(self):
+        from api.plugins.base import ParameterDef
+        return [ParameterDef(name="file_path", label="File Path")]
+
+    def parse(self, **kwargs) -> Graph:
         return Graph("mock")
 
 

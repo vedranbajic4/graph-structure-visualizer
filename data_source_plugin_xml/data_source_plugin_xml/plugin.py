@@ -1,4 +1,4 @@
-from api.plugins import DataSourcePlugin
+from api.plugins import DataSourcePlugin, ParameterDef
 
 from api.models.graph import Graph
 from api.models.edge import Edge, EdgeDirection
@@ -19,9 +19,11 @@ class XmlDataSourcePlugin(DataSourcePlugin):
     def get_plugin_name(self) -> str:
         return "XML Parser"
 
-    # TODO: Add checks if XML file is valid
+    def get_parameters(self):
+        return [ParameterDef(name="file_path", label="XML File Path")]
 
-    def parse(self, file_path: str) -> Graph:
+    def parse(self, **kwargs) -> Graph:
+        file_path = kwargs['file_path']
         parser = etree.XMLParser(resolve_entities=False, no_network=True, remove_comments=True)
         tree = etree.parse(file_path, parser)
         root = tree.getroot()
@@ -176,7 +178,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
 if __name__ == '__main__':
     plugin = XmlDataSourcePlugin()
 
-    graph = plugin.parse("tests/plugin_test/fixtures/xml_graph1.xml")
+    graph = plugin.parse(file_path="tests/plugin_test/fixtures/xml_graph1.xml")
 
     nodes = graph.get_all_nodes()
     edges = graph.get_all_edges()

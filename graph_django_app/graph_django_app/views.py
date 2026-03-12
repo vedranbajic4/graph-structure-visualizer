@@ -92,7 +92,7 @@ def upload_file(request):
             f.write(chunk)
 
     try:
-        platform.load_graph(plugin_name, str(file_path), workspace_name or None)
+        platform.load_graph(plugin_name, workspace_name or None, file_path=str(file_path))
         resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})

@@ -2,7 +2,7 @@ from rdflib import Graph as RDFGraph, URIRef, Literal
 from rdflib.namespace import RDF
 
 
-from api.plugins import DataSourcePlugin
+from api.plugins import DataSourcePlugin, ParameterDef
 
 from api.models.graph import Graph
 from api.models.edge import Edge, EdgeDirection
@@ -22,7 +22,11 @@ class RDFTurtleDataSourcePlugin(DataSourcePlugin):
     def get_plugin_name(self) -> str:
         return "RDF Turtle Parser"
 
-    def parse(self, file_path: str) -> Graph:
+    def get_parameters(self):
+        return [ParameterDef(name="file_path", label="Turtle (.ttl) File Path")]
+
+    def parse(self, **kwargs) -> Graph:
+        file_path = kwargs['file_path']
         rdf_graph = RDFGraph()
         rdf_graph.parse(file_path, format="turtle")
 
@@ -87,7 +91,7 @@ class RDFTurtleDataSourcePlugin(DataSourcePlugin):
 
 def print_test_data():
     plugin = RDFTurtleDataSourcePlugin()
-    graph = plugin.parse("../../tests/plugin_test/fixtures/simple_graph1.ttl")
+    graph = plugin.parse(file_path="../../tests/plugin_test/fixtures/simple_graph1.ttl")
 
     print(f"Plugin: {plugin.get_plugin_name()}")
     print(repr(graph))

@@ -132,19 +132,11 @@ class ViewService:
 
         return result
 
-    # ── Bird View ────────────────────────────────────────────────
+    # ── Bird View / Main View ─────────────────────────────────────
 
-    def build_bird_view_data(self, graph: Graph) -> Dict[str, Any]:
+    def build_graph_data(self, graph: Graph) -> Dict[str, Any]:
         """
-        Return the raw graph dict consumed by the D3.js Bird View minimap.
-        """
-        return graph.to_dict()
-
-    # ── Main View ────────────────────────────────────────────────
-
-    def build_main_view_data(self, graph: Graph) -> Dict[str, Any]:
-        """
-        Return the raw graph dict for the Main View panel.
+        Return the raw graph dict for Bird View and Main View panels.
         """
         return graph.to_dict()
 
@@ -182,7 +174,7 @@ class ViewService:
         return {
             'has_graph': True,
             'graph_html': graph_html,
-            'graph_data': graph.to_dict(),
+            'graph_data': self.build_graph_data(graph),
             'tree_data': self.build_tree_view_data(graph),
             'workspace': workspace_dict,
             'workspaces': workspaces,

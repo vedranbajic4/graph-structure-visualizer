@@ -58,9 +58,7 @@ class PlatformConfig:
         max_history_depth:   How many graph snapshots a Workspace keeps
                              for undo / reset operations.
         default_visualizer:  Entry-point name of the default visualizer plugin.
-        default_data_source: Entry-point name of the default data source plugin.
     """
     serialization: SerializationConfig = field(default_factory=SerializationConfig)
     max_history_depth: int = 50
     default_visualizer: Optional[str] = None
-    default_data_source: Optional[str] = None
