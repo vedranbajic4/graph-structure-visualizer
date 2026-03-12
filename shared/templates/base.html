@@ -395,12 +395,23 @@ function buildTreeNodeFromData(nodeData) {
         label.textContent = nodeData.id + ' ↻';
     }
 
-    /* Click to select across all views */
+    /* Click to select across all views and pan to node */
     label.onclick = (e) => {
         e.stopPropagation();
         document.querySelectorAll('.tree-label.selected').forEach(el => el.classList.remove('selected'));
         label.classList.add('selected');
         highlightNodeAllViews(nodeData.id);
+        /* Pan main view to this node */
+        const g = document.querySelector(`[data-node-id="${nodeData.id}"]`);
+        if (g) {
+            const t = g.getAttribute('transform');
+            const m = t && t.match(/translate\(\s*([-\d.]+)[,\s]+([-\d.]+)/);
+            if (m) {
+                document.dispatchEvent(new CustomEvent('bird-navigate', {
+                    detail: { graphX: parseFloat(m[1]), graphY: parseFloat(m[2]) }
+                }));
+            }
+        }
     };
 
     li.appendChild(toggle);
@@ -477,17 +488,19 @@ function renderBirdView() {
 
     const g = svg.append('g');
     const linkGroup = g.append('g');
-    const nodeGroup = g.append('g');
 
-    /* Viewport rect — on top of g, draggable */
-    const viewport = svg.append('rect')
+    /* Viewport rect — inside g, between links and nodes (below nodes visually) */
+    const viewport = g.append('rect')
         .attr('fill', 'rgba(230,126,34,0.15)')
         .attr('stroke', '#e67e22').attr('stroke-width', 1.5).attr('rx', 2)
         .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h)
         .style('cursor', 'move');
 
+    const nodeGroup = g.append('g');
+
     /* ── Viewport drag → pan main view ── */
     let fitK = 1, fitTx = 0, fitTy = 0;
+    let posById = {};  /* shared position lookup for node clicks */
 
     const vpDrag = d3.drag()
         .on('drag', function(event) {
@@ -528,7 +541,17 @@ function renderBirdView() {
     nodeGroup.selectAll('circle').data(nodes).join('circle')
         .attr('r', 3).attr('fill', '#3498db').attr('stroke', '#fff').attr('stroke-width', 0.5)
         .style('cursor', 'pointer')
-        .on('click', (ev, d) => { ev.stopPropagation(); highlightNodeAllViews(d.id); });
+        .on('click', (ev, d) => {
+            ev.stopPropagation();
+            highlightNodeAllViews(d.id);
+            /* Pan main view to this node's graph coords */
+            const pos = posById[d.id] || d;
+            if (pos && pos.x != null) {
+                document.dispatchEvent(new CustomEvent('bird-navigate', {
+                    detail: { graphX: pos.x, graphY: pos.y }
+                }));
+            }
+        });
 
     // ── Own D3 force simulation — no dependency on sv-positions ──────
     const sim = d3.forceSimulation(nodes)
@@ -563,6 +586,9 @@ function renderBirdView() {
 
             /* Expose fit params for viewport drag */
             fitK = k; fitTx = tx; fitTy = ty;
+            /* Update shared position lookup from sim */
+            posById = {};
+            nodes.forEach(n => { posById[n.id] = n; });
         });
 
     // ── sv-positions: override with main-view positions + sync viewport ──
@@ -574,8 +600,9 @@ function renderBirdView() {
         sim.stop();
 
         // Map main-view positions onto our local node objects
-        const posById = {};
-        positions.forEach(p => { posById[p.id] = p; });
+        const newPosById = {};
+        positions.forEach(p => { newPosById[p.id] = p; });
+        posById = newPosById;
 
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         const pad = 10;
@@ -611,10 +638,10 @@ function renderBirdView() {
         fitK = k; fitTx = tx; fitTy = ty;
     });
 
-    // ── Click bird → navigate main view (unchanged) ──────────────────
+    // ── Click bird → navigate main view + deselect ──────────────────
     svg.on('click', function(event) {
         if (window._birdGeneration !== myGen) return;
-        if (event.target === viewport.node()) return; /* don't navigate when dragging viewport */
+        deselectAllNodes();
         const [cx, cy] = d3.pointer(event, svg.node());
         const graphX = (cx - fitTx) / fitK;
         const graphY = (cy - fitTy) / fitK;
@@ -624,6 +651,66 @@ function renderBirdView() {
     });
 
     window._birdView = { svg, nodeGroup, w, h };
+}
+
+/* ============================================================
+   Expand tree view to first occurrence of a node
+   ============================================================ */
+function expandTreeToNode(nodeId) {
+    /* Find the path (indices) from root to the target node in TREE_DATA */
+    function findPath(nodeData, target, path) {
+        if (nodeData.id === target) return path;
+        if (!nodeData.connections) return null;
+        for (let i = 0; i < nodeData.connections.length; i++) {
+            const res = findPath(nodeData.connections[i].node, target, path.concat(i));
+            if (res) return res;
+        }
+        return null;
+    }
+
+    if (!TREE_DATA || TREE_DATA.length === 0) return;
+
+    let path = null;
+    let rootIdx = 0;
+    for (let r = 0; r < TREE_DATA.length; r++) {
+        path = findPath(TREE_DATA[r], nodeId, []);
+        if (path) { rootIdx = r; break; }
+    }
+    if (!path) return;
+
+    /* Walk the DOM tree, expanding toggles along the path */
+    const treeContainer = document.getElementById('tree-container');
+    const rootUl = treeContainer.querySelector('.tree-list');
+    if (!rootUl) return;
+
+    let currentLi = rootUl.children[rootIdx];
+    if (!currentLi) return;
+
+    for (const connIdx of path) {
+        /* Expand this node if not already expanded */
+        const toggle = currentLi.querySelector(':scope > .tree-toggle');
+        if (toggle && toggle.textContent === '+') {
+            toggle.click();
+        }
+        /* Find the child ul, skip attribute li's, find the connIdx-th tree node li */
+        const childUl = currentLi.querySelector(':scope > .tree-list');
+        if (!childUl) break;
+        let nodeChildIdx = 0;
+        let targetLi = null;
+        for (const child of childUl.children) {
+            if (child.classList.contains('tree-attr')) continue;
+            if (nodeChildIdx === connIdx) { targetLi = child; break; }
+            nodeChildIdx++;
+        }
+        if (!targetLi) break;
+        currentLi = targetLi;
+    }
+
+    /* Scroll the final node into view */
+    const label = currentLi.querySelector(':scope > .tree-label');
+    if (label) {
+        label.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 }
 
 /* ============================================================
@@ -637,7 +724,9 @@ function highlightNodeAllViews(nodeId) {
         circle.classList.toggle('selected', id === nodeId);
     });
 
-    /* Tree View */
+    /* Tree View — expand path to first occurrence and scroll into view */
+    expandTreeToNode(nodeId);
+
     document.querySelectorAll('.tree-label').forEach(el => {
         el.classList.toggle('selected', el.title === nodeId);
     });
@@ -647,6 +736,15 @@ function highlightNodeAllViews(nodeId) {
         window._birdView.svg.selectAll('circle')
             .attr('fill', d => d.id === nodeId ? '#e67e22' : '#3498db')
             .attr('r',    d => d.id === nodeId ? 5 : 3);
+    }
+}
+
+function deselectAllNodes() {
+    document.querySelectorAll('.sv-node-circle.selected').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.tree-label.selected').forEach(el => el.classList.remove('selected'));
+    if (window._birdView) {
+        window._birdView.svg.selectAll('circle')
+            .attr('fill', '#3498db').attr('r', 3);
     }
 }
 
@@ -684,6 +782,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTreeView();
     renderBirdView();
     attachMainViewNodeClicks();
+
+    /* Click empty space in tree panel → deselect */
+    document.getElementById('tree-panel').addEventListener('click', (e) => {
+        if (!e.target.closest('.tree-label') && !e.target.closest('.tree-toggle')) {
+            deselectAllNodes();
+        }
+    });
 });
 
 document.addEventListener('keydown', (e) => {

@@ -391,7 +391,9 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
     node.attr('data-node-id', d => d.id)
 
     /* ── Node tooltip ────────────────────────────────── */
+    let isDragging = false;
     node.on('mouseover', function(event, d) {{
+        if (isDragging) return;
         let html = '<strong>' + d.label + '</strong> <em>(' + d.id + ')</em><br>';
         for (const [k, v] of Object.entries(d.attributes)) {{
             html += k + ': ' + v + '<br>';
@@ -408,9 +410,15 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
 
     /* ── Click-to-select ─────────────────────────────── */
     node.on('click', function(event, d) {{
+        event.stopPropagation();
         d3.selectAll('.sv-node-circle').classed('selected', false);
         d3.select(this).select('circle').classed('selected', true);
         container.dispatchEvent(new CustomEvent('node-selected', {{ detail: {{ nodeId: d.id }} }}));
+    }});
+
+    /* Click SVG background → deselect */
+    svg.on('click', function() {{
+        if (typeof deselectAllNodes === 'function') deselectAllNodes();
     }});
 
     /* ── Tick ────────────────────────────────────────── */
@@ -467,6 +475,8 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
 
     /* ── Drag handlers ───────────────────────────────── */
     function dragStarted(event, d) {{
+        isDragging = true;
+        tooltip.style.opacity = 0;
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x; d.fy = d.y;
     }}
@@ -474,6 +484,7 @@ class SimpleVisualizerPlugin(VisualizerPlugin):
         d.fx = event.x; d.fy = event.y;
     }}
     function dragEnded(event, d) {{
+        isDragging = false;
         if (!event.active) simulation.alphaTarget(0);
         d.fx = null; d.fy = null;
     }}
