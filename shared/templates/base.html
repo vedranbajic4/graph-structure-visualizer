@@ -489,14 +489,21 @@ function renderBirdView() {
     const g = svg.append('g');
     const linkGroup = g.append('g');
 
-    /* Viewport rect — inside g, between links and nodes (below nodes visually) */
+    /* Interactive (draggable) rect — below nodes so node clicks are not blocked */
     const viewport = g.append('rect')
-        .attr('fill', 'rgba(230,126,34,0.15)')
-        .attr('stroke', '#e67e22').attr('stroke-width', 1.5).attr('rx', 2)
+        .attr('fill', 'rgba(0,0,0,0)')
+        .attr('stroke', 'none')
         .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h)
         .style('cursor', 'move');
 
     const nodeGroup = g.append('g');
+
+    /* Visual-only rect — above nodes, pointer-events disabled so nodes stay clickable */
+    const viewportVisual = g.append('rect')
+        .attr('fill', 'rgba(230,126,34,0.15)')
+        .attr('stroke', '#e67e22').attr('stroke-width', 1.5).attr('rx', 2)
+        .attr('x', 0).attr('y', 0).attr('width', w).attr('height', h)
+        .style('pointer-events', 'none');
 
     /* ── Viewport drag → pan main view ── */
     let fitK = 1, fitTx = 0, fitTy = 0;
@@ -633,6 +640,7 @@ function renderBirdView() {
         const rw = (viewWidth  / mainTransform.k) * k;
         const rh = (viewHeight / mainTransform.k) * k;
         viewport.attr('x', rx).attr('y', ry).attr('width', Math.abs(rw)).attr('height', Math.abs(rh));
+        viewportVisual.attr('x', rx).attr('y', ry).attr('width', Math.abs(rw)).attr('height', Math.abs(rh));
 
         /* Expose fit params for viewport drag */
         fitK = k; fitTx = tx; fitTy = ty;
