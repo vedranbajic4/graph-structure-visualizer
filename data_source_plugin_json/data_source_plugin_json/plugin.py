@@ -22,7 +22,12 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         return [ParameterDef(name="file_path", label="JSON File Path")]
 
     def parse(self, **kwargs) -> Graph:
-        file_path = kwargs['file_path']
+        file_path = kwargs.get('file_path')
+        if not file_path:
+            raise ValueError(
+                "Missing required parameter 'file_path' for JSON Parser. "
+                "Call plugin.get_parameters() for required inputs."
+            )
         with open(file_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
 

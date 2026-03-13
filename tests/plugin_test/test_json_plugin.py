@@ -209,6 +209,10 @@ class TestArbitraryJSON:
 # ── Error handling ────────────────────────────────────────────────────────────
 
 class TestErrorHandling:
+    def test_missing_file_path_parameter_raises_value_error(self, plugin):
+        with pytest.raises(ValueError, match="file_path"):
+            plugin.parse()
+
     def test_missing_file_raises(self, plugin):
         with pytest.raises(FileNotFoundError):
             plugin.parse(file_path="nonexistent/path/file.json")

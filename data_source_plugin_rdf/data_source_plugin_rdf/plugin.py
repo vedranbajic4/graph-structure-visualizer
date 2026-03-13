@@ -26,7 +26,12 @@ class RDFTurtleDataSourcePlugin(DataSourcePlugin):
         return [ParameterDef(name="file_path", label="Turtle (.ttl) File Path")]
 
     def parse(self, **kwargs) -> Graph:
-        file_path = kwargs['file_path']
+        file_path = kwargs.get('file_path')
+        if not file_path:
+            raise ValueError(
+                "Missing required parameter 'file_path' for RDF Turtle Parser. "
+                "Call plugin.get_parameters() for required inputs."
+            )
         rdf_graph = RDFGraph()
         rdf_graph.parse(file_path, format="turtle")
 

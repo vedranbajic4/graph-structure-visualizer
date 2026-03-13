@@ -23,7 +23,12 @@ class XmlDataSourcePlugin(DataSourcePlugin):
         return [ParameterDef(name="file_path", label="XML File Path")]
 
     def parse(self, **kwargs) -> Graph:
-        file_path = kwargs['file_path']
+        file_path = kwargs.get('file_path')
+        if not file_path:
+            raise ValueError(
+                "Missing required parameter 'file_path' for XML Parser. "
+                "Call plugin.get_parameters() for required inputs."
+            )
         parser = etree.XMLParser(resolve_entities=False, no_network=True, remove_comments=True)
         tree = etree.parse(file_path, parser)
         root = tree.getroot()

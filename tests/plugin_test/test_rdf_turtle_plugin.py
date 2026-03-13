@@ -139,6 +139,10 @@ class TestEdgeParsing:
 # ── Error handling ────────────────────────────────────────────────────────────
 
 class TestErrorHandling:
+    def test_missing_file_path_parameter_raises_value_error(self, plugin):
+        with pytest.raises(ValueError, match="file_path"):
+            plugin.parse()
+
     def test_invalid_file_path_raises(self, plugin):
         with pytest.raises(Exception):
             plugin.parse(file_path="nonexistent/path/file.ttl")
