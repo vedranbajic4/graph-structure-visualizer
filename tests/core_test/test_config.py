@@ -163,22 +163,16 @@ class TestPlatformConfig:
         cfg = PlatformConfig()
         assert cfg.default_visualizer is None
 
-    def test_default_data_source_is_none(self):
-        cfg = PlatformConfig()
-        assert cfg.default_data_source is None
-
     def test_custom_values(self):
         ser = SerializationConfig(include_types=False)
         cfg = PlatformConfig(
             serialization=ser,
             max_history_depth=10,
             default_visualizer="simple",
-            default_data_source="json",
         )
         assert cfg.serialization.include_types is False
         assert cfg.max_history_depth == 10
         assert cfg.default_visualizer == "simple"
-        assert cfg.default_data_source == "json"
 
     def test_serialization_config_fields_are_independent(self):
         """Two PlatformConfig instances should have independent SerializationConfigs."""

@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import re
 import shlex
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Dict, Any
 
 from api.models.graph import Graph
 
@@ -56,7 +56,7 @@ class CommandProcessor:
         """
         Initialize the processor.
         """
-        self._undo_stack: List[Tuple[Command, Graph]] = []
+        self._undo_stack: List[Graph] = []
         self._max_undo = 50
 
     # ── Public API ───────────────────────────────────────────────
@@ -110,8 +110,7 @@ class CommandProcessor:
         if isinstance(command, (FilterCommand, SearchCommand)):
             result = command.execute(graph)
             if result.success and result.graph is not None:
-                # Push old graph for undo
-                self._push_undo(command, graph)
+                self._push_undo(graph)
             return result
 
         # --- Standard mutating commands ---
@@ -121,27 +120,27 @@ class CommandProcessor:
         result = command.execute(graph)
 
         if result.success and command.supports_undo and snapshot is not None:
-            self._push_undo(command, snapshot)
+            self._push_undo(snapshot)
 
         return result
 
     def _do_undo(self, graph: Graph) -> CommandResult:
-        """Pop the last command and restore the previous graph."""
+        """Pop the last snapshot and restore it."""
         if not self._undo_stack:
             return CommandResult(False, "Nothing to undo.", graph)
 
-        command, old_graph = self._undo_stack.pop()
+        old_graph = self._undo_stack.pop()
         return CommandResult(
             True,
             f"Undo successful (stack depth: {len(self._undo_stack)}).",
             old_graph,
         )
 
-    def _push_undo(self, command: Command, graph_snapshot: Graph) -> None:
-        """Save a command + graph snapshot for potential undo."""
+    def _push_undo(self, graph_snapshot: Graph) -> None:
+        """Save a graph snapshot for potential undo."""
         if len(self._undo_stack) >= self._max_undo:
             self._undo_stack.pop(0)
-        self._undo_stack.append((command, graph_snapshot))
+        self._undo_stack.append(graph_snapshot)
 
     # ── Comment handling ────────────────────────────────────────
 

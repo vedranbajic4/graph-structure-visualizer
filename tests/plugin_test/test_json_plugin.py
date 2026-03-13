@@ -20,11 +20,11 @@ def plugin():
 
 @pytest.fixture
 def graph(plugin):
-    return plugin.parse(str(GRAPH_PATH))
+    return plugin.parse(file_path=str(GRAPH_PATH))
 
 @pytest.fixture
 def cyclic_graph(plugin):
-    return plugin.parse(str(CYCLIC_PATH))
+    return plugin.parse(file_path=str(CYCLIC_PATH))
 
 
 # ── Plugin metadata ───────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ class TestArbitraryJSON:
         data = {"name": "Alice", "age": 30}
         p = tmp_path / "f.json"
         p.write_text(json.dumps(data))
-        g = plugin.parse(str(p))
+        g = plugin.parse(file_path=str(p))
         assert g.get_number_of_nodes() == 1
         node = g.get_all_nodes()[0]
         assert node.get_attribute("name") == "Alice"
@@ -180,7 +180,7 @@ class TestArbitraryJSON:
         data = [{"@id": "x", "val": 1}, {"@id": "y", "val": 2}]
         p = tmp_path / "f.json"
         p.write_text(json.dumps(data))
-        g = plugin.parse(str(p))
+        g = plugin.parse(file_path=str(p))
         assert g.get_number_of_nodes() == 2
         assert g.get_node("x").get_attribute("val") == 1
         assert g.get_node("y").get_attribute("val") == 2
@@ -189,32 +189,36 @@ class TestArbitraryJSON:
         data = {"@id": "a", "child": {"@id": "b", "child": {"@id": "c", "leaf": True}}}
         p = tmp_path / "f.json"
         p.write_text(json.dumps(data))
-        g = plugin.parse(str(p))
+        g = plugin.parse(file_path=str(p))
         assert g.get_number_of_nodes() == 3
         assert g.get_number_of_edges() == 2
 
     def test_empty_object(self, plugin, tmp_path):
         p = tmp_path / "f.json"
         p.write_text("{}")
-        g = plugin.parse(str(p))
+        g = plugin.parse(file_path=str(p))
         assert g.get_number_of_nodes() == 1
 
     def test_empty_array(self, plugin, tmp_path):
         p = tmp_path / "f.json"
         p.write_text("[]")
-        g = plugin.parse(str(p))
+        g = plugin.parse(file_path=str(p))
         assert g.get_number_of_nodes() == 0
 
 
 # ── Error handling ────────────────────────────────────────────────────────────
 
 class TestErrorHandling:
+    def test_missing_file_path_parameter_raises_value_error(self, plugin):
+        with pytest.raises(ValueError, match="file_path"):
+            plugin.parse()
+
     def test_missing_file_raises(self, plugin):
         with pytest.raises(FileNotFoundError):
-            plugin.parse("nonexistent/path/file.json")
+            plugin.parse(file_path="nonexistent/path/file.json")
 
     def test_invalid_json_raises(self, plugin, tmp_path):
         p = tmp_path / "bad.json"
         p.write_text("{not valid json")
         with pytest.raises(json.JSONDecodeError):
-            plugin.parse(str(p))
+            plugin.parse(file_path=str(p))

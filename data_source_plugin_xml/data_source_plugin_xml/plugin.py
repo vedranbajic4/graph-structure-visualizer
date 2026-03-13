@@ -1,4 +1,4 @@
-from api.plugins import DataSourcePlugin
+from api.plugins import DataSourcePlugin, ParameterDef
 
 from api.models.graph import Graph
 from api.models.edge import Edge, EdgeDirection
@@ -19,9 +19,16 @@ class XmlDataSourcePlugin(DataSourcePlugin):
     def get_plugin_name(self) -> str:
         return "XML Parser"
 
-    # TODO: Add checks if XML file is valid
+    def get_parameters(self):
+        return [ParameterDef(name="file_path", label="XML File Path")]
 
-    def parse(self, file_path: str) -> Graph:
+    def parse(self, **kwargs) -> Graph:
+        file_path = kwargs.get('file_path')
+        if not file_path:
+            raise ValueError(
+                "Missing required parameter 'file_path' for XML Parser. "
+                "Call plugin.get_parameters() for required inputs."
+            )
         parser = etree.XMLParser(resolve_entities=False, no_network=True, remove_comments=True)
         tree = etree.parse(file_path, parser)
         root = tree.getroot()
@@ -71,7 +78,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
             #                  EdgeDirection = EdgeDirection.DIRECTED,
             #                  attr=attr_name)
             # graph.add_edge(attr_edge)
-            current_node.attributes[attr_name] = attr_value
+            current_node.set_attribute(attr_name, attr_value)
         
         for child in root:
             # Handle cyclic edges
@@ -110,7 +117,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                 #                     **edge_attributes)
 
                 # graph.add_edge(attr_edge)
-                current_node.attributes[attribute_name] = leaf_text
+                current_node.set_attribute(attribute_name, leaf_text)
 
             # Leaf node with attributes -> new node
             elif len(child) == 0:
@@ -176,7 +183,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
 if __name__ == '__main__':
     plugin = XmlDataSourcePlugin()
 
-    graph = plugin.parse("tests/plugin_test/fixtures/xml_graph1.xml")
+    graph = plugin.parse(file_path="tests/plugin_test/fixtures/xml_graph1.xml")
 
     nodes = graph.get_all_nodes()
     edges = graph.get_all_edges()

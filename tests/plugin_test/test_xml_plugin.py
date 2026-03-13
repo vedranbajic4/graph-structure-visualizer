@@ -21,7 +21,7 @@ def sample_xml_path():
 
 @pytest.fixture
 def parsed_graph(plugin, sample_xml_path):
-    return plugin.parse(str(sample_xml_path))
+    return plugin.parse(file_path=str(sample_xml_path))
 
 
 # ── Plugin metadata ───────────────────────────────────────────────────────────
@@ -43,14 +43,19 @@ class TestGraphStructure:
         assert parsed_graph.graph_id == str(sample_xml_path)
 
     def test_correct_node_count(self, parsed_graph):
+        # Per SPECS §2.2: "Tagove koji nemaju decu, posmatrati samo kao atribute"
+        # (leaf tags without children are stored as attributes on parent node)
         # Nodes: Graph[1], Person[1..4], Organization[1] = 6
-        # Attribute nodes (leaf elements): name+role for 4 persons = 8, plus name for org = 1 -> 9
-        # total = 6 + 9 = 15
-        assert parsed_graph.get_number_of_nodes() == 15
+        # Plus Person[2]:name (has lang attribute so becomes separate node) = 1
+        # Total = 7
+        assert parsed_graph.get_number_of_nodes() == 7
 
     def test_correct_edge_count(self, parsed_graph):
-        # attr edges (9) + relation edges (10) = 19
-        assert parsed_graph.get_number_of_edges() == 19
+        # Child edges (Graph→Persons + Graph→Org) = 5
+        # Relation edges (knows + 2x works_for + 2x manages) = 5
+        # Attribute edge (Person[2]→Person[2]:name) = 1
+        # Total = 11
+        assert parsed_graph.get_number_of_edges() == 11
 
     def test_graph_id_is_file_path(self, parsed_graph, sample_xml_path):
         assert parsed_graph.graph_id == str(sample_xml_path)
@@ -65,19 +70,22 @@ class TestNodeParsing:
         assert expected.issubset(actual)
 
     def test_attribute_nodes_exist_and_have_values(self, parsed_graph: Graph):
-        # name node for Person[1]
-        name_node = parsed_graph.get_node("Person[1]:name")
+        # Per SPECS §2.2: leaf elements without XML attributes become node attributes
+        # Person[1] has name/role as attributes (no separate nodes)
+        person1 = parsed_graph.get_node("Person[1]")
+        assert person1 is not None
+        assert person1.attributes.get('name') == "Alice"
+        assert person1.attributes.get('role') == "Engineer"
+
+        # Organization name is also an attribute
+        org = parsed_graph.get_node("Organization[1]")
+        assert org.attributes.get('name') == "TechCorp"
+
+        # Person[2]:name is a separate node because <name lang="en">Bob</name> has XML attribute
+        name_node = parsed_graph.get_node("Person[2]:name")
         assert name_node is not None
-        assert name_node.attributes['value'] == "Alice"
-
-        # role node for Person[1]
-        role_node = parsed_graph.get_node("Person[1]:role")
-        assert role_node is not None
-        assert role_node.attributes['value'] == "Engineer"
-
-        # organization name
-        org_name_node = parsed_graph.get_node("Organization[1]:name")
-        assert org_name_node.attributes['value'] == "TechCorp"
+        assert name_node.attributes.get('value') == "Bob"
+        assert name_node.attributes.get('lang') == "en"
 
     def test_nodes_are_xmlnode_instances(self, parsed_graph):
         for node in parsed_graph.get_all_nodes():
@@ -105,24 +113,30 @@ class TestEdgeParsing:
         assert e1 is not None and e2 is not None
 
     def test_attribute_edges_exist(self, parsed_graph):
-        edge = self._find_edge(parsed_graph, "Person[1]", "Person[1]:name", "name")
+        # Only Person[2]:name is a separate node (due to lang attribute)
+        edge = self._find_edge(parsed_graph, "Person[2]", "Person[2]:name", "name")
         assert edge is not None
 
     def test_attr_edge_includes_element_attributes(self, parsed_graph: Graph):
-        # I.e. Bob's <name lang="en"> should cause the attr edge Person[2] -> Person[2]:name to have 'lang' attribute
-        edge = self._find_edge(parsed_graph, "Person[2]", "Person[2]:name", "name")
-        assert edge is not None
-        assert edge.attributes['lang'] == 'en'
+        # Bob's <name lang="en"> - the lang attribute is stored on the node, not the edge
+        node = parsed_graph.get_node("Person[2]:name")
+        assert node is not None
+        assert node.attributes.get('lang') == 'en'
+        assert node.attributes.get('value') == 'Bob'
 
 
 
 class TestErrorHandling:
+    def test_missing_file_path_parameter_raises_value_error(self, plugin):
+        with pytest.raises(ValueError, match="file_path"):
+            plugin.parse()
+
     def test_invalid_file_path_raises(self, plugin):
         with pytest.raises(Exception):
-            plugin.parse("nonexistent/path/file.xml")
+            plugin.parse(file_path="nonexistent/path/file.xml")
 
     def test_empty_xml_file_raises_syntax_error(self, plugin, tmp_path):
         empty = tmp_path / "empty.xml"
         empty.write_text("")  # an empty file is not well-formed XML
         with pytest.raises(etree.XMLSyntaxError):
-            plugin.parse(str(empty))
+            plugin.parse(file_path=str(empty))

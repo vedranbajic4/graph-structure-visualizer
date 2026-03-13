@@ -99,13 +99,9 @@ class GraphPlatform:
         self._active_workspace_id: Optional[str] = None
 
         # Services (imported here to avoid circular imports)
-        from services.filter_service import FilterService
-        from services.search_service import SearchService
         from services.serialization_service import GraphSerializer
         from services.view_service import ViewService
 
-        self._filter_service = FilterService()
-        self._search_service = SearchService()
         self._serializer = GraphSerializer(self._config.serialization)
         self._view_service = ViewService()
 
@@ -170,15 +166,18 @@ class GraphPlatform:
 
     # ── Graph loading ────────────────────────────────────────────
 
-    def load_graph(self, plugin_name: str, file_path: str,
-                   workspace_name: Optional[str] = None) -> Workspace:
+    def load_graph(self, plugin_name: str,
+                   workspace_name: Optional[str] = None,
+                   **kwargs) -> Workspace:
         """
         Load a graph from a data source and create a new workspace.
 
         Args:
             plugin_name:    Entry-point name of the data-source plugin.
-            file_path:      Path / URI to load.
             workspace_name: Optional human-readable workspace name.
+            **kwargs:       Plugin-specific parameters declared by
+                            ``plugin.get_parameters()`` (e.g. ``file_path=...``,
+                            ``api_url=...``, ``api_key=...``).
 
         Returns:
             The newly created Workspace.
@@ -193,15 +192,15 @@ class GraphPlatform:
                 f"Available: {self._ds_loader.get_names()}"
             )
 
-        graph = plugin.parse(file_path)
+        graph = plugin.parse(**kwargs)
         ws = self.create_workspace(
             graph,
             data_source=plugin_name,
-            file_path=file_path,
+            file_path=kwargs.get('file_path', ''),
             name=workspace_name,
         )
-        logger.info("Graph loaded via '%s' from '%s' → workspace %s",
-                     plugin_name, file_path, ws.workspace_id[:8])
+        logger.info("Graph loaded via '%s' → workspace %s",
+                     plugin_name, ws.workspace_id[:8])
         return ws
 
     # ── Workspace management ─────────────────────────────────────

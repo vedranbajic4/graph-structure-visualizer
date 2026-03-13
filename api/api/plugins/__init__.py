@@ -1,6 +1,6 @@
 """
 Plugin contracts — abstract base classes for DataSource and Visualizer plugins.
 """
-from .base import DataSourcePlugin, VisualizerPlugin
+from .base import ParameterDef, DataSourcePlugin, VisualizerPlugin
 
-__all__ = ['DataSourcePlugin', 'VisualizerPlugin']
+__all__ = ['ParameterDef', 'DataSourcePlugin', 'VisualizerPlugin']

@@ -60,14 +60,24 @@ class SearchService(GraphQueryService[str]):
         else:
             return self._find_by_name(graph, query)
 
-    def _find_by_name(self, graph: Graph, attr_name: str) -> Set[str]:
-        """Return IDs of nodes that have an attribute with this name (case-insensitive)."""
-        attr_lower = attr_name.lower()
-        return {
-            node.node_id
-            for node in graph.get_all_nodes()
-            if any(attr_lower in key.lower() for key in node.attributes.keys())
-        }
+    def _find_by_name(self, graph: Graph, query: str) -> Set[str]:
+        """
+        Return IDs of nodes where query appears in attribute name or value
+        (case-insensitive).
+        """
+        query_lower = query.lower()
+        matching_ids = set()
+
+        for node in graph.get_all_nodes():
+            for key, attr_val in node.attributes.items():
+                if query_lower in key.lower():
+                    matching_ids.add(node.node_id)
+                    break
+                if attr_val is not None and query_lower in str(attr_val).lower():
+                    matching_ids.add(node.node_id)
+                    break
+
+        return matching_ids
 
     def _find_by_value(self, graph: Graph, attr_name: str, value: str) -> Set[str]:
         """Return IDs of nodes where attribute 'attr_name' contains 'value' (case-insensitive)."""

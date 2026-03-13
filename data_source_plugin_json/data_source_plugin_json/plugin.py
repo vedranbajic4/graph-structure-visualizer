@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
-from api.plugins import DataSourcePlugin
+from api.plugins import DataSourcePlugin, ParameterDef
 from api.models.graph import Graph
 from api.models.edge import Edge, EdgeDirection
 from api.models.node import Node
@@ -18,7 +18,16 @@ class JsonDataSourcePlugin(DataSourcePlugin):
     def get_plugin_name(self) -> str:
         return "JSON Parser"
 
-    def parse(self, file_path: str) -> Graph:
+    def get_parameters(self):
+        return [ParameterDef(name="file_path", label="JSON File Path")]
+
+    def parse(self, **kwargs) -> Graph:
+        file_path = kwargs.get('file_path')
+        if not file_path:
+            raise ValueError(
+                "Missing required parameter 'file_path' for JSON Parser. "
+                "Call plugin.get_parameters() for required inputs."
+            )
         with open(file_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
 
@@ -194,7 +203,7 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         ))
 def print_test_data():
     plugin = JsonDataSourcePlugin()
-    graph = plugin.parse("tests/plugin_test/fixtures/json_graph1.json")
+    graph = plugin.parse(file_path="tests/plugin_test/fixtures/json_graph1.json")
 
     print(f"Plugin: {plugin.get_plugin_name()}")
     print(repr(graph))

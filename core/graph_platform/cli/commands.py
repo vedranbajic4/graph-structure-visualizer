@@ -34,20 +34,12 @@ from __future__ import annotations
 
 import uuid
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from api.models.graph import Graph
 from api.models.node import Node
 from api.models.edge import Edge, EdgeDirection
-
-
-# ── Concrete Node for CLI-created nodes ──────────────────────────
-
-class _CLINode(Node):
-    """Minimal concrete Node subclass for CLI-created nodes."""
-    pass
 
 
 # ── Result wrapper ───────────────────────────────────────────────
@@ -83,17 +75,6 @@ class Command(ABC):
         """Execute the command on the given graph."""
         ...
 
-    def undo(self, graph: Graph) -> CommandResult:
-        """
-        Reverse the command.  Override in concrete commands
-        that support undo.
-        """
-        return CommandResult(
-            success=False,
-            message="Undo is not supported for this command.",
-            graph=graph,
-        )
-
     @property
     def supports_undo(self) -> bool:
         """Whether this command can be undone."""
@@ -124,28 +105,13 @@ class CreateNodeCommand(Command):
                 graph=graph,
             )
 
-        node = _CLINode(self._node_id, **self._properties)
+        node = Node(self._node_id, **self._properties)
         graph.add_node(node)
         return CommandResult(
             success=True,
             message=f"Node '{self._node_id}' created with {len(self._properties)} attribute(s).",
             graph=graph,
         )
-
-    def undo(self, graph: Graph) -> CommandResult:
-        node = graph.get_node(self._node_id)
-        if node is None:
-            return CommandResult(False, f"Node '{self._node_id}' not found for undo.", graph)
-
-        # Check if node has edges (per spec: can't delete node with edges)
-        edges = graph._adjacency_list.get(self._node_id, [])
-        if edges:
-            # Force-remove edges first (since we're undoing a create, they shouldn't exist)
-            for edge in list(edges):
-                graph.remove_edge(edge.edge_id)
-
-        graph.remove_node(self._node_id)
-        return CommandResult(True, f"Undo: node '{self._node_id}' removed.", graph)
 
     @property
     def supports_undo(self) -> bool:
@@ -163,18 +129,12 @@ class EditNodeCommand(Command):
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         self._node_id = str(node_id)
         self._new_properties = properties
-        self._old_properties: Dict[str, Any] = {}
 
     def execute(self, graph: Graph) -> CommandResult:
         node = graph.get_node(self._node_id)
         if node is None:
             return CommandResult(False, f"Node '{self._node_id}' not found.", graph)
 
-        # Save old values for undo
-        for key in self._new_properties:
-            self._old_properties[key] = node.get_attribute(key)
-
-        # Apply new values
         for key, value in self._new_properties.items():
             node.set_attribute(key, value)
 
@@ -183,19 +143,6 @@ class EditNodeCommand(Command):
             f"Node '{self._node_id}' updated: {list(self._new_properties.keys())}.",
             graph,
         )
-
-    def undo(self, graph: Graph) -> CommandResult:
-        node = graph.get_node(self._node_id)
-        if node is None:
-            return CommandResult(False, f"Node '{self._node_id}' not found for undo.", graph)
-
-        for key, old_value in self._old_properties.items():
-            if old_value is None:
-                node.delete_attribute(key)
-            else:
-                node.set_attribute(key, old_value)
-
-        return CommandResult(True, f"Undo: node '{self._node_id}' attributes restored.", graph)
 
     @property
     def supports_undo(self) -> bool:
@@ -213,7 +160,6 @@ class DeleteNodeCommand(Command):
 
     def __init__(self, node_id: str):
         self._node_id = str(node_id)
-        self._deleted_node_attrs: Dict[str, Any] = {}
 
     def execute(self, graph: Graph) -> CommandResult:
         node = graph.get_node(self._node_id)
@@ -232,19 +178,8 @@ class DeleteNodeCommand(Command):
                 graph,
             )
 
-        # Save state for undo
-        self._deleted_node_attrs = node.get_all_attributes()
-
         graph.remove_node(self._node_id)
         return CommandResult(True, f"Node '{self._node_id}' deleted.", graph)
-
-    def undo(self, graph: Graph) -> CommandResult:
-        if graph.get_node(self._node_id) is not None:
-            return CommandResult(False, f"Node '{self._node_id}' already exists.", graph)
-
-        node = _CLINode(self._node_id, **self._deleted_node_attrs)
-        graph.add_node(node)
-        return CommandResult(True, f"Undo: node '{self._node_id}' restored.", graph)
 
     @property
     def supports_undo(self) -> bool:
@@ -296,13 +231,6 @@ class CreateEdgeCommand(Command):
             graph,
         )
 
-    def undo(self, graph: Graph) -> CommandResult:
-        if graph.get_edge(self._edge_id) is None:
-            return CommandResult(False, f"Edge '{self._edge_id}' not found for undo.", graph)
-
-        graph.remove_edge(self._edge_id)
-        return CommandResult(True, f"Undo: edge '{self._edge_id}' removed.", graph)
-
     @property
     def supports_undo(self) -> bool:
         return True
@@ -319,18 +247,12 @@ class EditEdgeCommand(Command):
     def __init__(self, edge_id: str, properties: Dict[str, Any]):
         self._edge_id = str(edge_id)
         self._new_properties = properties
-        self._old_properties: Dict[str, Any] = {}
 
     def execute(self, graph: Graph) -> CommandResult:
         edge = graph.get_edge(self._edge_id)
         if edge is None:
             return CommandResult(False, f"Edge '{self._edge_id}' not found.", graph)
 
-        # Save old values for undo
-        for key in self._new_properties:
-            self._old_properties[key] = edge.get_attribute(key)
-
-        # Apply new values
         for key, value in self._new_properties.items():
             edge.set_attribute(key, value)
 
@@ -339,19 +261,6 @@ class EditEdgeCommand(Command):
             f"Edge '{self._edge_id}' updated: {list(self._new_properties.keys())}.",
             graph,
         )
-
-    def undo(self, graph: Graph) -> CommandResult:
-        edge = graph.get_edge(self._edge_id)
-        if edge is None:
-            return CommandResult(False, f"Edge '{self._edge_id}' not found for undo.", graph)
-
-        for key, old_value in self._old_properties.items():
-            if old_value is None:
-                edge.delete_attribute(key)
-            else:
-                edge.set_attribute(key, old_value)
-
-        return CommandResult(True, f"Undo: edge '{self._edge_id}' attributes restored.", graph)
 
     @property
     def supports_undo(self) -> bool:
@@ -368,44 +277,14 @@ class DeleteEdgeCommand(Command):
 
     def __init__(self, edge_id: str):
         self._edge_id = str(edge_id)
-        # Saved state for undo
-        self._source_id: Optional[str] = None
-        self._target_id: Optional[str] = None
-        self._directed: bool = True
-        self._attrs: Dict[str, Any] = {}
 
     def execute(self, graph: Graph) -> CommandResult:
         edge = graph.get_edge(self._edge_id)
         if edge is None:
             return CommandResult(False, f"Edge '{self._edge_id}' not found.", graph)
 
-        # Save for undo
-        self._source_id = edge.source_node.node_id
-        self._target_id = edge.target_node.node_id
-        self._directed = edge.is_directed()
-        self._attrs = edge.get_all_attributes()
-
         graph.remove_edge(self._edge_id)
         return CommandResult(True, f"Edge '{self._edge_id}' deleted.", graph)
-
-    def undo(self, graph: Graph) -> CommandResult:
-        if graph.get_edge(self._edge_id) is not None:
-            return CommandResult(False, f"Edge '{self._edge_id}' already exists.", graph)
-
-        source = graph.get_node(self._source_id)
-        target = graph.get_node(self._target_id)
-
-        if source is None or target is None:
-            return CommandResult(
-                False,
-                f"Cannot undo: endpoint nodes no longer exist.",
-                graph,
-            )
-
-        direction = EdgeDirection.DIRECTED if self._directed else EdgeDirection.UNDIRECTED
-        edge = Edge(self._edge_id, source, target, direction, **self._attrs)
-        graph.add_edge(edge)
-        return CommandResult(True, f"Undo: edge '{self._edge_id}' restored.", graph)
 
     @property
     def supports_undo(self) -> bool:
@@ -492,12 +371,7 @@ class ClearCommand(Command):
         clear
     """
 
-    def __init__(self):
-        self._backup: Optional[Graph] = None
-
     def execute(self, graph: Graph) -> CommandResult:
-        self._backup = deepcopy(graph)
-        # Remove all edges first, then all nodes
         for edge_id in list(graph.edges.keys()):
             graph.remove_edge(edge_id)
         for node_id in list(graph.nodes.keys()):
@@ -508,11 +382,6 @@ class ClearCommand(Command):
             "Graph cleared.",
             graph,
         )
-
-    def undo(self, graph: Graph) -> CommandResult:
-        if self._backup is None:
-            return CommandResult(False, "No backup available for undo.", graph)
-        return CommandResult(True, "Undo: graph restored.", self._backup)
 
     @property
     def supports_undo(self) -> bool:

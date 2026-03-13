@@ -25,11 +25,6 @@ from api.types import ValueType, TypeValidator
 from graph_platform.config import SerializationConfig
 
 
-class _ConcreteNode(Node):
-    """Minimal concrete Node used during deserialization."""
-    pass
-
-
 class GraphSerializer:
     """
     Serialize / deserialize ``Graph`` instances with configurable field control.
@@ -136,7 +131,7 @@ class GraphSerializer:
     # ── Deserialization ──────────────────────────────────────────
 
     def deserialize(self, data: Dict[str, Any],
-                    node_class: Type[Node] = _ConcreteNode) -> Graph:
+                    node_class: Type[Node] = Node) -> Graph:
         """
         Reconstruct a Graph from a dictionary (inverse of ``serialize``).
 
@@ -189,7 +184,7 @@ class GraphSerializer:
         return graph
 
     def from_json(self, json_str: str,
-                  node_class: Type[Node] = _ConcreteNode) -> Graph:
+                  node_class: Type[Node] = Node) -> Graph:
         """Deserialize a Graph from a JSON string."""
         data = json.loads(json_str)
         return self.deserialize(data, node_class)

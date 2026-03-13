@@ -34,6 +34,12 @@ def test_search_by_name_no_match(stub_graph):
     assert len(result.nodes) == 0
 
 
+def test_search_plain_text_matches_attribute_values(stub_graph):
+    """Plain-text query should match attribute values too (per spec)."""
+    result = SearchService().search(stub_graph, "Alice")
+    assert set(result.nodes.keys()) == {"n1"}
+
+
 def test_search_by_name_returns_graph_instance(stub_graph):
     """Result must be a Graph instance, not None or a list."""
     from api.models.graph import Graph
