@@ -97,10 +97,16 @@ class Workspace:
         Returns:
             The resulting subgraph (also stored as ``current_graph``).
         """
+        conditions = [c.strip() for c in query.split('&&')]
+
+        # Evaluate all conditions first so a parse/type error does not leave
+        # the workspace in a partially-filtered state.
+        result_graph = self._current_graph
+        for condition in conditions:
+            result_graph = self._filter_service.filter(result_graph, condition)
+
         self._push_snapshot()
-        self._current_graph = self._filter_service.filter(
-            self._current_graph, query
-        )
+        self._current_graph = result_graph
         logger.info("Workspace %s: filter '%s' applied (%d nodes)",
                      self.workspace_id[:8], query,
                      self._current_graph.get_number_of_nodes())

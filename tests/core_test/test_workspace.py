@@ -148,6 +148,10 @@ class TestFilter:
             assert edge.source_node.node_id in result.nodes
             assert edge.target_node.node_id in result.nodes
 
+    def test_compound_filter_with_and(self, ws):
+        result = ws.apply_filter("Age > 25 && City == Paris")
+        assert set(result.nodes.keys()) == {"n1", "n3"}
+
 
 # ── Search ─────────────────────────────────────────────────────
 
@@ -269,6 +273,10 @@ class TestHistoryManagement:
     def test_history_depth_increments_on_filter(self, ws):
         assert ws.history_depth == 0
         ws.apply_filter("Age >= 30")
+        assert ws.history_depth == 1
+
+    def test_compound_filter_counts_as_single_history_step(self, ws):
+        ws.apply_filter("Age > 25 && City == Paris")
         assert ws.history_depth == 1
 
     def test_history_depth_increments_on_search(self, ws):
