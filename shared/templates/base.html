@@ -139,6 +139,21 @@
     </div>
 
     <div id="status-bar" class="status-bar"></div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-icon">⚠️</span>
+                <h3 class="modal-title">Error</h3>
+            </div>
+            <p id="modal-message" class="modal-message"></p>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeErrorModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {# ═══════════════════════════════════════════════════════════ #}
@@ -227,25 +242,52 @@ function toggleUpload() {
     const p = document.getElementById('upload-panel');
     p.style.display = p.style.display === 'none' ? 'flex' : 'none';
 }
-
 async function handleUpload(e) {
     e.preventDefault();
     const form = document.getElementById('upload-form');
     const fd = new FormData(form);
-    document.getElementById('upload-error').style.display = 'none';
 
+    // 1. Extension check
+    const extensionMap = { 'rdf_turtle': '.ttl', 'xml': '.xml', 'json': '.json' };
+    const plugin = document.getElementById('upload-plugin').value;
+    const file   = document.getElementById('upload-file').files[0];
+
+    if (plugin && file && extensionMap[plugin]) {
+        if (!file.name.toLowerCase().endsWith(extensionMap[plugin])) {
+            showErrorModal(
+                `Wrong file type!\n\nSelected format "${plugin}" expects a "${extensionMap[plugin]}" file, but "${file.name}" was provided.\n\nPlease choose the correct file and try again.`
+            );
+            return false;
+        }
+    }
+
+    // 2. Duplicate workspace name check
+    const workspaceName = document.getElementById('upload-name').value.trim();
+    if (workspaceName) {
+        const existingNames = Array.from(
+            document.querySelectorAll('#workspace-tabs .ws-tab')
+        ).map(btn => btn.childNodes[0].textContent.trim().toLowerCase());
+
+        if (existingNames.includes(workspaceName.toLowerCase())) {
+            showErrorModal(
+                `Workspace name "${workspaceName}" is already in use.\n\nPlease choose a different name and try again.`
+            );
+            return false;
+        }
+    }
+
+    // 3. Submit to server
     const data = await api(URLS.upload, fd, true);
     if (data.success) {
         toggleUpload();
         updatePanels(data);
         showStatus('Graph loaded successfully.', false);
     } else {
-        const err = document.getElementById('upload-error');
-        err.textContent = data.error;
-        err.style.display = 'block';
+        showErrorModal(data.error || 'An unexpected error occurred. Please try again.');
     }
     return false;
 }
+
 
 /* ============================================================
    Visualizer switch
@@ -811,6 +853,23 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target.id === 'search-input') doSearch();
     if (e.key === 'Enter' && e.target.id === 'filter-input') doFilter();
 });
+
+function showErrorModal(message) {
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('error-modal').style.display = 'flex';
+}
+
+function closeErrorModal() {
+    document.getElementById('error-modal').style.display = 'none';
+}
+
+// Close on backdrop click
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('error-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeErrorModal();
+    });
+});
+
 </script>
 
 </body>

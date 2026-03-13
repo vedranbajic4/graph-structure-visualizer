@@ -316,3 +316,55 @@ body {
     }
     .sf-input { width: 140px; }
 }
+
+/* Error Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.modal-box {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 28px 32px;
+    min-width: 320px;
+    max-width: 480px;
+    width: 90%;
+    animation: modal-pop 0.18s ease;
+}
+@keyframes modal-pop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.modal-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+.modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+.modal-message {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+    margin: 0 0 22px 0;
+    word-break: break-word;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+}
