@@ -529,7 +529,7 @@ class GraphPlatform:
             proc = CommandProcessor()
             self._cli_processors[ws.workspace_id] = proc
 
-        result = proc.process(text, ws.current_graph)
+        result = proc.process(text, ws.current_graph, workspace=ws)
 
         # Handle reset sentinel
         if result.success and getattr(result, 'data', None) and \

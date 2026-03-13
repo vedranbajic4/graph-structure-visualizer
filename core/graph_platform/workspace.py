@@ -170,6 +170,11 @@ class Workspace:
             self._history.pop(0)  # Drop oldest snapshot
         self._history.append(deepcopy(self._current_graph))
 
+    def _pop_snapshot(self) -> None:
+        """Remove the most recent snapshot (rolls back a pre-emptive push on command failure)."""
+        if self._history:
+            self._history.pop()
+
     # ── Convenience ──────────────────────────────────────────────
 
     def to_dict(self) -> dict:

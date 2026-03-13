@@ -61,13 +61,17 @@ class CommandProcessor:
 
     # ── Public API ───────────────────────────────────────────────
 
-    def process(self, text: str, graph: Graph) -> CommandResult:
+    def process(self, text: str, graph: Graph, workspace=None) -> CommandResult:
         """
         Parse and execute a single CLI command on the given graph.
 
         Args:
-            text:  Raw command string from the user.
-            graph: The current graph on the Main View.
+            text:      Raw command string from the user.
+            graph:     The current graph on the Main View.
+            workspace: Optional Workspace instance.  When provided, snapshots
+                       and undo are routed through the workspace history so
+                       the CLI undo command and the UI undo button share one
+                       unified stack.
 
         Returns:
             ``CommandResult`` with success status, message, and
@@ -82,7 +86,7 @@ class CommandProcessor:
         except ValueError as e:
             return CommandResult(False, f"Parse error: {e}", graph)
 
-        return self._execute(command, graph)
+        return self._execute(command, graph, workspace)
 
     def get_undo_depth(self) -> int:
         """Number of commands that can be undone."""
@@ -90,37 +94,64 @@ class CommandProcessor:
 
     # ── Execution engine ─────────────────────────────────────────
 
-    def _execute(self, command: Command, graph: Graph) -> CommandResult:
-        """Execute a parsed command and manage the undo stack."""
+    def _execute(self, command: Command, graph: Graph, workspace=None) -> CommandResult:
+        """
+        Execute a parsed command and manage the undo stack.
+
+        When ``workspace`` is provided all snapshot/undo operations are
+        delegated to the workspace history so the CLI and the UI undo
+        button share a single unified stack.
+        """
 
         # --- Special: undo ---
         if isinstance(command, UndoCommand):
+            if workspace is not None:
+                restored = workspace.undo()
+                if restored is not None:
+                    depth = workspace.history_depth
+                    return CommandResult(
+                        True,
+                        f"Undo successful (stack depth: {depth}).",
+                        restored,
+                    )
+                return CommandResult(False, "Nothing to undo.", graph)
             return self._do_undo(graph)
 
-        # --- Special: reset (needs access to the original, handled externally) ---
+        # --- Special: reset (sentinel handled in GraphPlatform.execute_command) ---
         if isinstance(command, ResetCommand):
             return CommandResult(
                 True,
-                "RESET",  # Sentinel for the platform / web layer
+                "RESET",
                 graph,
                 data={"action": "reset"},
             )
 
-        # --- Special: filter / search produce a NEW graph ---
+        # --- filter / search: execute first, push snapshot on success ---
         if isinstance(command, (FilterCommand, SearchCommand)):
             result = command.execute(graph)
             if result.success and result.graph is not None:
-                self._push_undo(graph)
+                if workspace is not None:
+                    workspace._push_snapshot()
+                else:
+                    self._push_undo(graph)
             return result
 
         # --- Standard mutating commands ---
-        from copy import deepcopy
-        snapshot = deepcopy(graph) if command.supports_undo else None
+        if command.supports_undo:
+            if workspace is not None:
+                workspace._push_snapshot()
+            else:
+                from copy import deepcopy
+                self._push_undo(deepcopy(graph))
 
         result = command.execute(graph)
 
-        if result.success and command.supports_undo and snapshot is not None:
-            self._push_undo(snapshot)
+        # Roll back the pre-emptive snapshot if the command failed
+        if not result.success and command.supports_undo:
+            if workspace is not None:
+                workspace._pop_snapshot()
+            elif self._undo_stack:
+                self._undo_stack.pop()
 
         return result
 
