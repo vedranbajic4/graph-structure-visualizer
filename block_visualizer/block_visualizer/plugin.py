@@ -1,17 +1,5 @@
 """
-Simple Visualizer Plugin — renders a graph as circles + lines using D3.js.
-
-Design Pattern: Strategy (implements VisualizerPlugin contract).
-
-Each node is drawn as a circle with its ID (or Name attribute) as a label.
-Edges are drawn as lines (with arrowheads for directed edges).
-The layout uses D3.js force simulation for automatic positioning.
-
-Interactions provided:
-    • Drag-and-drop on nodes
-    • Zoom / pan on the SVG canvas
-    • Mouseover tooltip with node details
-    • Click-to-select highlighting
+Block Visualizer Plugin
 """
 import json
 from typing import Any
@@ -121,6 +109,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
         return f"""
 <style>
+
     .block-vis-container {{
         width: 100%;
         height: 100%;
@@ -288,13 +277,6 @@ class BlockVisualizerPlugin(VisualizerPlugin):
         .attr('d', 'M0,-5L10,0L0,5')
         .attr('class', 'sv-arrow');
 
-    /* ── Force simulation ────────────────────────────── */
-    const simulation = d3.forceSimulation(nodesData)
-        .force('link', d3.forceLink(edgesData).id(d => d.id).distance(60))
-        .force('charge', d3.forceManyBody().strength(-60))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(20))
-        .velocityDecay(0.65);
 
     /* ── Draw edges ──────────────────────────────────── */
     const link = g.append('g')
@@ -338,12 +320,16 @@ class BlockVisualizerPlugin(VisualizerPlugin):
     }}
 
     const measure = document.createElement("div");
+    measure.className = "sv-fo-wrapper"; 
     measure.style.position = "absolute";
     measure.style.visibility = "hidden";
     measure.style.pointerEvents = "none";
     measure.style.left = "-10000px";
     measure.style.top = "-10000px";
+    measure.style.boxSizing = "border-box"; 
+    measure.style.whiteSpace = "normal"; 
     document.body.appendChild(measure);
+
 
     node.each(function(d, i) {{
       const rows = listFromAttributes(d);
@@ -363,10 +349,11 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
       // first put the html table into measure area to get the size
       measure.innerHTML = html;
+      
       const wrapper = measure.firstElementChild;
 
-      const w = Math.ceil(wrapper.offsetWidth);
-      const h = Math.ceil(wrapper.offsetHeight);
+      const w = Math.ceil(wrapper.offsetWidth) + 2;
+      const h = Math.ceil(wrapper.offsetHeight) + 4;
 
       d.width = w;
       d.height = h;
@@ -385,6 +372,7 @@ class BlockVisualizerPlugin(VisualizerPlugin):
       const fo = d3.select(this)
         .append("foreignObject")
         .attr("class", "node-fo")
+        .attr("overflow", "visible")
         .attr("width", w)
         .attr("height", h)
         .attr("x", -w / 2)
@@ -398,11 +386,15 @@ class BlockVisualizerPlugin(VisualizerPlugin):
 
     node.attr('data-node-id', d => d.id)
     
-    simulation.force("collision",
-        d3.forceCollide(d =>
-            Math.sqrt(d.width*d.width + d.height*d.height)/2
-        )
-    );
+    const simulation = d3.forceSimulation(nodesData)
+    .force('link', d3.forceLink(edgesData).id(d => d.id).distance(400))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('x', d3.forceX(width / 2).strength(0.04))
+    .force('y', d3.forceY(height / 2).strength(0.04))
+    .force('collision', d3.forceCollide(d =>
+        Math.sqrt(d.width * d.width + d.height * d.height) / 2 + 4
+    ))
+    .velocityDecay(0.45);
 
     /* ── Tooltip ─────────────────────────────────────── */
     let isDragging = false;
