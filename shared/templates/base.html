@@ -676,13 +676,19 @@ function renderBirdView() {
 
         nodeGroup.selectAll('circle')
             .attr('cx', d => { const p = posById[d.id]; return p ? tx + p.x * k : 0; })
-            .attr('cy', d => { const p = posById[d.id]; return p ? ty + p.y * k : 0; });
+            .attr('cy', d => { const p = posById[d.id]; return p ? ty + p.y * k : 0; })
+            .style('display', d => posById[d.id] ? null : 'none');
 
         linkGroup.selectAll('line')
             .attr('x1', d => { const s = posById[typeof d.source==='object'?d.source.id:d.source]; return s ? tx+s.x*k : 0; })
             .attr('y1', d => { const s = posById[typeof d.source==='object'?d.source.id:d.source]; return s ? ty+s.y*k : 0; })
             .attr('x2', d => { const t = posById[typeof d.target==='object'?d.target.id:d.target]; return t ? tx+t.x*k : 0; })
-            .attr('y2', d => { const t = posById[typeof d.target==='object'?d.target.id:d.target]; return t ? ty+t.y*k : 0; });
+            .attr('y2', d => { const t = posById[typeof d.target==='object'?d.target.id:d.target]; return t ? ty+t.y*k : 0; })
+            .style('display', d => {
+                const srcId = typeof d.source==='object' ? d.source.id : d.source;
+                const tgtId = typeof d.target==='object' ? d.target.id : d.target;
+                return (posById[srcId] && posById[tgtId]) ? null : 'none';
+            });
 
         // Sync viewport rectangle
         const rx = tx + (-mainTransform.x / mainTransform.k) * k;
