@@ -240,15 +240,25 @@ body {
     overflow: hidden;
 }
 .cli-output {
-    max-height: 90px;
+    max-height: 160px;
     overflow-y: auto;
     padding: 4px 8px;
 }
-.cli-line { padding: 1px 0; }
+.cli-line {
+    padding: 3px 0;
+    border-bottom: 1px solid #313244;
+}
+.cli-line:last-child { border-bottom: none; }
 .cli-ok .cli-msg { color: #a6e3a1; }
 .cli-err .cli-msg { color: #f38ba8; }
 .cli-prompt { color: #89b4fa; font-weight: bold; }
-.cli-msg { margin-left: 18px; }
+.cli-msg {
+    display: block;
+    margin-left: 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+}
 
 .cli-input-row {
     display: flex;
