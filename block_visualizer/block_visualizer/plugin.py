@@ -60,9 +60,8 @@ class BlockVisualizerPlugin(VisualizerPlugin):
                         node_attributes[attr_name] = _safe_str(attr_value)
 
             label = (
-                node.get_attribute("Name")
-                or node.get_attribute("name")
-                or node.get_attribute("label")
+                node_attributes.get("Name")
+                or node_attributes.get("name")
                 or node.node_id
             )
             attrs = {}
