@@ -247,21 +247,36 @@ async function handleUpload(e) {
     const form = document.getElementById('upload-form');
     const fd = new FormData(form);
 
-    // Extension validation
+    // 1. Extension check
     const extensionMap = { 'rdf_turtle': '.ttl', 'xml': '.xml', 'json': '.json' };
     const plugin = document.getElementById('upload-plugin').value;
     const file   = document.getElementById('upload-file').files[0];
 
     if (plugin && file && extensionMap[plugin]) {
-        const expectedExt = extensionMap[plugin];
-        if (!file.name.toLowerCase().endsWith(expectedExt)) {
+        if (!file.name.toLowerCase().endsWith(extensionMap[plugin])) {
             showErrorModal(
-                `Wrong file type!\n\nSelected format "${plugin}" expects a "${expectedExt}" file, but "${file.name}" was provided.\n\nPlease choose the correct file and try again.`
+                `Wrong file type!\n\nSelected format "${plugin}" expects a "${extensionMap[plugin]}" file, but "${file.name}" was provided.\n\nPlease choose the correct file and try again.`
             );
             return false;
         }
     }
 
+    // 2. Duplicate workspace name check
+    const workspaceName = document.getElementById('upload-name').value.trim();
+    if (workspaceName) {
+        const existingNames = Array.from(
+            document.querySelectorAll('#workspace-tabs .ws-tab')
+        ).map(btn => btn.childNodes[0].textContent.trim().toLowerCase());
+
+        if (existingNames.includes(workspaceName.toLowerCase())) {
+            showErrorModal(
+                `Workspace name "${workspaceName}" is already in use.\n\nPlease choose a different name and try again.`
+            );
+            return false;
+        }
+    }
+
+    // 3. Submit to server
     const data = await api(URLS.upload, fd, true);
     if (data.success) {
         toggleUpload();
