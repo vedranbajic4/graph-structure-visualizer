@@ -78,7 +78,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
             #                  EdgeDirection = EdgeDirection.DIRECTED,
             #                  attr=attr_name)
             # graph.add_edge(attr_edge)
-            current_node.attributes[attr_name] = attr_value
+            current_node.set_attribute(attr_name, attr_value)
         
         for child in root:
             # Handle cyclic edges
@@ -117,7 +117,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                 #                     **edge_attributes)
 
                 # graph.add_edge(attr_edge)
-                current_node.attributes[attribute_name] = leaf_text
+                current_node.set_attribute(attribute_name, leaf_text)
 
             # Leaf node with attributes -> new node
             elif len(child) == 0:
