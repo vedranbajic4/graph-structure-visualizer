@@ -126,7 +126,7 @@
             {% for entry in cli_output %}
             <div class="cli-line {% if entry.success %}cli-ok{% else %}cli-err{% endif %}">
                 <span class="cli-prompt">&gt;</span> {{ entry.command }}
-                <br><span class="cli-msg">{{ entry.message }}</span>
+                <span class="cli-msg">{{ entry.message }}</span>
             </div>
             {% endfor %}
         </div>
@@ -301,8 +301,16 @@ async function doCli() {
     const out = document.getElementById('cli-output');
     const div = document.createElement('div');
     div.className = 'cli-line ' + (data.success ? 'cli-ok' : 'cli-err');
-    div.innerHTML = '<span class="cli-prompt">&gt;</span> ' + escHTML(cmd) +
-        '<br><span class="cli-msg">' + escHTML(data.message || data.error || '') + '</span>';
+    const cmdSpan = document.createElement('span');
+    cmdSpan.className = 'cli-prompt';
+    cmdSpan.textContent = '>';
+    const cmdText = document.createTextNode(' ' + cmd);
+    const msgSpan = document.createElement('span');
+    msgSpan.className = 'cli-msg';
+    msgSpan.textContent = data.message || data.error || '';
+    div.appendChild(cmdSpan);
+    div.appendChild(cmdText);
+    div.appendChild(msgSpan);
     out.appendChild(div);
     out.scrollTop = out.scrollHeight;
 
