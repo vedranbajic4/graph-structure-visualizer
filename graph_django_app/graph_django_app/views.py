@@ -7,6 +7,7 @@
 """
 import json
 import logging
+import os
 from pathlib import Path
 
 from django.conf import settings
@@ -18,28 +19,38 @@ from graph_platform.core import GraphPlatform
 
 logger = logging.getLogger(__name__)
 
+WORKSPACES_DIR = str(settings.BASE_DIR / 'media' / 'workspaces')
+
 # ── Module-level UI state (single-user app per spec §2.1) ────────
 _ui_state: dict = {
     'visualizer': 'simple',
     'cli_output': [],
 }
+_platform_ready = False
 
 _URLS = {
-    'upload': '/api/upload/',
-    'visualizer': '/api/visualizer/',
-    'search': '/api/search/',
-    'filter': '/api/filter/',
-    'undo': '/api/undo/',
-    'reset': '/api/reset/',
-    'cli': '/api/cli/',
+    'upload':           '/api/upload/',
+    'visualizer':       '/api/visualizer/',
+    'search':           '/api/search/',
+    'filter':           '/api/filter/',
+    'undo':             '/api/undo/',
+    'reset':            '/api/reset/',
+    'cli':              '/api/cli/',
     'workspace_switch': '/api/workspace/switch/',
     'workspace_delete': '/api/workspace/delete/',
-    'plugin_params': '/api/plugin/parameters/',
+    'workspace_create': '/api/workspace/create/',
+    'plugin_params':    '/api/plugin/parameters/',
 }
 
 
 def _get_platform() -> GraphPlatform:
-    return GraphPlatform.get_instance()
+    global _platform_ready
+    platform = GraphPlatform.get_instance()
+    if not _platform_ready:
+        platform.set_workspaces_dir(WORKSPACES_DIR)
+        platform.restore_workspaces(WORKSPACES_DIR)
+        _platform_ready = True
+    return platform
 
 
 def _view_response(platform, visualizer_name=None):
@@ -62,6 +73,7 @@ def index(request):
         'data_sources': platform.get_data_source_names(),
         'visualizers': platform.get_visualizer_names(),
         'active_visualizer': _ui_state.get('visualizer', 'simple'),
+        'active_workspace_id': ctx['workspace']['workspace_id'] if ctx.get('workspace') else None,
         'cli_output': _ui_state.get('cli_output', []),
         'graph_data_json': graph_data_json,
         'tree_data_json': tree_data_json,
@@ -240,3 +252,16 @@ def delete_workspace(request):
     resp = _view_response(platform)
     resp['success'] = True
     return JsonResponse(resp, json_dumps_params={'default': str})
+
+
+@require_POST
+def create_workspace_view(request):
+    platform = _get_platform()
+    data = json.loads(request.body) if request.body else {}
+    try:
+        platform.create_empty_workspace(name=data.get('name') or None)
+        resp = _view_response(platform)
+        resp['success'] = True
+        return JsonResponse(resp, json_dumps_params={'default': str})
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)})

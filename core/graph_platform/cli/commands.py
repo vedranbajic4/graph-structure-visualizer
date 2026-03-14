@@ -338,6 +338,7 @@ class SearchCommand(Command):
     Syntax:
         search 'Name=Tom'
         search Age
+        search name | role       (OR: matches either term)
     """
 
     def __init__(self, query: str):
@@ -547,8 +548,8 @@ Available commands:
       Example: filter 'Age>30 && Height>=150'
 
   search '<query>'
-      Search by attribute name or value.
-      Example: search Name=Alice   |   search Age
+      Search by attribute name or value. Use '|' for OR (multiple terms).
+      Example: search Name=Alice   |   search Age   |   search name | role
 
   clear
       Remove all nodes and edges from the graph.

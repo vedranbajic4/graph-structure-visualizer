@@ -22,6 +22,8 @@
     • ``GraphSerializer`` accepts any ``SerializationConfig`` strategy.
 """
 import logging
+import uuid as _uuid
+from pathlib import Path
 from typing import Dict, List, Optional, Callable, Any
 
 from api.models.graph import Graph
@@ -97,6 +99,7 @@ class GraphPlatform:
         # Workspace repository
         self._workspaces: Dict[str, Workspace] = {}
         self._active_workspace_id: Optional[str] = None
+        self._workspaces_dir: Optional[str] = None
 
         # Services (imported here to avoid circular imports)
         from services.serialization_service import GraphSerializer
@@ -234,6 +237,7 @@ class GraphPlatform:
         self._workspaces[ws.workspace_id] = ws
         self._active_workspace_id = ws.workspace_id
         self._notify(EVENT_WORKSPACE_CREATED, workspace=ws)
+        self._auto_save_workspace(ws)
         return ws
 
     def get_workspace(self, workspace_id: str) -> Optional[Workspace]:
@@ -271,6 +275,7 @@ class GraphPlatform:
                 self._active_workspace_id = next(iter(self._workspaces))
             else:
                 self._active_workspace_id = None
+        self._auto_delete_workspace_file(workspace_id)
         self._notify(EVENT_WORKSPACE_REMOVED, workspace_id=workspace_id)
 
     def list_workspaces(self) -> List[dict]:
@@ -311,6 +316,58 @@ class GraphPlatform:
         logger.info("Workspace loaded from %s", file_path)
         return ws
 
+    def create_empty_workspace(self, name: Optional[str] = None) -> Workspace:
+        """Create a workspace with an empty graph (no data source)."""
+        empty_graph = Graph(graph_id=str(_uuid.uuid4()))
+        return self.create_workspace(empty_graph, data_source='', file_path='', name=name)
+
+    def set_workspaces_dir(self, directory: str) -> None:
+        """Set the directory used for automatic workspace persistence."""
+        self._workspaces_dir = directory
+
+    def restore_workspaces(self, directory: str) -> int:
+        """
+        Load all saved workspace JSON files from *directory*.
+
+        Called once at app startup so previous sessions are resumed.
+
+        Returns:
+            Number of workspaces successfully restored.
+        """
+        dir_path = Path(directory)
+        if not dir_path.exists():
+            return 0
+        count = 0
+        for ws_file in sorted(dir_path.glob("*.json")):
+            try:
+                ws = Workspace.load(str(ws_file))
+                self._workspaces[ws.workspace_id] = ws
+                if self._active_workspace_id is None:
+                    self._active_workspace_id = ws.workspace_id
+                count += 1
+            except Exception as exc:
+                logger.error("Failed to restore workspace from %s: %s", ws_file, exc)
+        logger.info("Restored %d workspace(s) from %s", count, directory)
+        return count
+
+    def _auto_save_workspace(self, ws: Workspace) -> None:
+        """Save workspace to disk if a workspaces directory is configured."""
+        if self._workspaces_dir:
+            try:
+                ws.save(self._workspaces_dir)
+            except Exception as exc:
+                logger.error("Auto-save failed for workspace %s: %s", ws.workspace_id[:8], exc)
+
+    def _auto_delete_workspace_file(self, workspace_id: str) -> None:
+        """Delete the persisted file for a workspace, if it exists."""
+        if self._workspaces_dir:
+            try:
+                path = Path(self._workspaces_dir) / f"{workspace_id}.json"
+                if path.exists():
+                    path.unlink()
+            except Exception as exc:
+                logger.error("Auto-delete failed for workspace %s: %s", workspace_id[:8], exc)
+
     # ── Graph operations on active workspace ─────────────────────
 
     def filter_graph(self, query: str,
@@ -327,6 +384,7 @@ class GraphPlatform:
         ws = self._resolve_workspace(workspace_id)
         result = ws.apply_filter(query)
         self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result)
+        self._auto_save_workspace(ws)
         return result
 
     def search_graph(self, query: str,
@@ -340,6 +398,7 @@ class GraphPlatform:
         ws = self._resolve_workspace(workspace_id)
         result = ws.apply_search(query)
         self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result)
+        self._auto_save_workspace(ws)
         return result
 
     def undo(self, workspace_id: Optional[str] = None) -> Optional[Graph]:
@@ -348,6 +407,7 @@ class GraphPlatform:
         result = ws.undo()
         if result is not None:
             self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result)
+            self._auto_save_workspace(ws)
         return result
 
     def reset_workspace(self, workspace_id: Optional[str] = None) -> Graph:
@@ -355,6 +415,7 @@ class GraphPlatform:
         ws = self._resolve_workspace(workspace_id)
         result = ws.reset()
         self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result)
+        self._auto_save_workspace(ws)
         return result
 
     # ── Visualization ────────────────────────────────────────────
@@ -536,12 +597,14 @@ class GraphPlatform:
                 result.data.get('action') == 'reset':
             new_graph = ws.reset()
             self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=new_graph)
+            self._auto_save_workspace(ws)
             return _CR(True, "Workspace reset to original graph.", new_graph)
 
         # If the command produced a new graph, update the workspace view
         if result.success and result.graph is not None:
             ws._current_graph = result.graph
             self._notify(EVENT_GRAPH_UPDATED, workspace=ws, graph=result.graph)
+            self._auto_save_workspace(ws)
 
         return result
 

@@ -32,6 +32,7 @@
                 </span>
             </button>
             {% endfor %}
+            <button class="ws-tab-add" onclick="createEmptyWorkspace()" title="New empty workspace">&#43;</button>
         </div>
 
         <label class="vis-label" for="vis-select">Visualizer:</label>
@@ -423,6 +424,18 @@ function rebuildWorkspaceTabs(workspaces, activeWs) {
             ws.workspace_id + '\')">&times;</span>';
         cont.appendChild(btn);
     });
+    const addBtn = document.createElement('button');
+    addBtn.className = 'ws-tab-add';
+    addBtn.title = 'New empty workspace';
+    addBtn.textContent = '+';
+    addBtn.onclick = createEmptyWorkspace;
+    cont.appendChild(addBtn);
+}
+
+async function createEmptyWorkspace() {
+    const data = await api(URLS.workspace_create, {});
+    updatePanels(data);
+    if (data.success) showStatus('Empty workspace created.', false);
 }
 
 /* ============================================================

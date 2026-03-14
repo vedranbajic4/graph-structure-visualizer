@@ -79,6 +79,17 @@ body {
     opacity: 0.5;
 }
 .ws-tab-close:hover { opacity: 1; color: #e74c3c; }
+.ws-tab-add {
+    padding: 4px 9px;
+    border: 1px dashed #7f8c8d;
+    border-radius: 4px 4px 0 0;
+    background: transparent;
+    color: #7f8c8d;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+.ws-tab-add:hover { color: #3498db; border-color: #3498db; }
 
 /* ── Visualizer selector ─────────────────────────────────── */
 
