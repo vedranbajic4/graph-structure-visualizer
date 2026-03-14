@@ -26,26 +26,36 @@ app = Flask(
 app.secret_key = 'your-secret-key-here'
 logger = logging.getLogger(__name__)
 
+WORKSPACES_DIR = os.path.join(BASE_DIR, 'media', 'workspaces')
+
 _ui_state: dict = {
     'visualizer': 'simple',
     'cli_output': [],
 }
+_platform_ready = False
 
 URLS = {
-    'upload':           '/api/upload',
-    'visualizer':       '/api/visualizer',
-    'search':           '/api/search',
-    'filter':           '/api/filter',
-    'undo':             '/api/undo',
-    'reset':            '/api/reset',
-    'cli':              '/api/cli',
-    'workspace_switch': '/api/workspace/switch',
-    'workspace_delete': '/api/workspace/delete',
-    'plugin_params':    '/api/plugin/parameters',
+    'upload':            '/api/upload',
+    'visualizer':        '/api/visualizer',
+    'search':            '/api/search',
+    'filter':            '/api/filter',
+    'undo':              '/api/undo',
+    'reset':             '/api/reset',
+    'cli':               '/api/cli',
+    'workspace_switch':  '/api/workspace/switch',
+    'workspace_delete':  '/api/workspace/delete',
+    'workspace_create':  '/api/workspace/create',
+    'plugin_params':     '/api/plugin/parameters',
 }
 
 def _get_platform() -> GraphPlatform:
-    return GraphPlatform.get_instance()
+    global _platform_ready
+    platform = GraphPlatform.get_instance()
+    if not _platform_ready:
+        platform.set_workspaces_dir(WORKSPACES_DIR)
+        platform.restore_workspaces(WORKSPACES_DIR)
+        _platform_ready = True
+    return platform
 
 def _view_response(platform, visualizer_name=None):
     """Delegate view building to the core ViewService."""
@@ -69,6 +79,7 @@ def index():
         data_sources=platform.get_data_source_names(),
         visualizers=platform.get_visualizer_names(),
         active_visualizer=_ui_state.get('visualizer', 'simple'),
+        active_workspace_id=ctx['workspace']['workspace_id'] if ctx.get('workspace') else None,
         cli_output=_ui_state.get('cli_output', []),
         graph_data_json=graph_data_json,
         tree_data_json=tree_data_json,
@@ -231,6 +242,19 @@ def delete_workspace():
     resp = _view_response(platform)
     resp['success'] = True
     return jsonify(resp)
+
+
+@app.route('/api/workspace/create', methods=['POST'])
+def create_workspace():
+    platform = _get_platform()
+    data = request.get_json() or {}
+    try:
+        platform.create_empty_workspace(name=data.get('name') or None)
+        resp = _view_response(platform)
+        resp['success'] = True
+        return jsonify(resp)
+    except Exception as exc:
+        return jsonify({'success': False, 'error': str(exc)})
 
 
 if __name__ == '__main__':

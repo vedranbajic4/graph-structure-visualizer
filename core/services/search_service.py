@@ -49,16 +49,24 @@ class SearchService(GraphQueryService[str]):
             raise SearchParseError("Search query cannot be empty.")
 
     def _find_matching_nodes(self, graph: Graph, query: str) -> Set[str]:
-        """Return IDs of all nodes matching the search query."""
-        query = query.strip()
-        match = _VALUE_PATTERN.match(query)
+        """Return IDs of all nodes matching the search query.
 
-        if match:
-            attr_name = match.group(1)
-            search_value = match.group(2).strip()
-            return self._find_by_value(graph, attr_name, search_value)
-        else:
-            return self._find_by_name(graph, query)
+        Supports OR logic via '|' separator, e.g. ``"name | role"`` returns
+        nodes matching either term.
+        """
+        terms = [t.strip() for t in query.split('|')]
+        matching_ids: Set[str] = set()
+        for term in terms:
+            if not term:
+                continue
+            match = _VALUE_PATTERN.match(term)
+            if match:
+                attr_name = match.group(1)
+                search_value = match.group(2).strip()
+                matching_ids |= self._find_by_value(graph, attr_name, search_value)
+            else:
+                matching_ids |= self._find_by_name(graph, term)
+        return matching_ids
 
     def _find_by_name(self, graph: Graph, query: str) -> Set[str]:
         """
