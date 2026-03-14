@@ -94,15 +94,32 @@ body {
 
 .upload-panel {
     display: none;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
+    padding: 8px 16px;
     background: #fefefe;
     border-bottom: 2px solid #3498db;
-    flex-wrap: wrap;
     flex-shrink: 0;
 }
-.upload-panel label { font-size: 13px; font-weight: 600; }
+#upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.upload-main-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+#plugin-extra-params {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+#plugin-extra-params:empty {
+    display: none;
+}
+.upload-panel label { font-size: 13px; font-weight: 600; white-space: nowrap; }
 .upload-panel input[type="text"],
 .upload-panel select { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
 .upload-panel input[type="file"] { font-size: 13px; }

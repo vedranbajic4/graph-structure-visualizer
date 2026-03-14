@@ -34,6 +34,7 @@ _URLS = {
     'cli': '/api/cli/',
     'workspace_switch': '/api/workspace/switch/',
     'workspace_delete': '/api/workspace/delete/',
+    'plugin_params': '/api/plugin/parameters/',
 }
 
 
@@ -91,14 +92,39 @@ def upload_file(request):
         for chunk in uploaded_file.chunks():
             f.write(chunk)
 
+    # Collect any extra plugin-specific parameters from the form
+    _skip = {'plugin_name', 'workspace_name', 'csrfmiddlewaretoken'}
+    extra_kwargs = {k: v for k, v in request.POST.items() if k not in _skip and v.strip()}
+
     try:
-        platform.load_graph(plugin_name, workspace_name or None, file_path=str(file_path))
+        platform.load_graph(plugin_name, workspace_name or None, file_path=str(file_path), **extra_kwargs)
         resp = _view_response(platform)
         resp['success'] = True
         return JsonResponse(resp, json_dumps_params={'default': str})
     except Exception as exc:
         logger.exception("Upload failed")
         return JsonResponse({'success': False, 'error': str(exc)})
+
+
+def plugin_parameters(request):
+    """Return the extra (non-file) parameters declared by a data source plugin."""
+    platform = _get_platform()
+    plugin_name = request.GET.get('plugin', '')
+    plugin = platform.get_data_source(plugin_name)
+    if plugin is None:
+        return JsonResponse({'params': []})
+    params = [
+        {
+            'name': p.name,
+            'label': p.label,
+            'description': p.description,
+            'required': p.required,
+            'default': p.default,
+        }
+        for p in plugin.get_parameters()
+        if p.name != 'file_path'
+    ]
+    return JsonResponse({'params': params})
 
 
 @require_POST
