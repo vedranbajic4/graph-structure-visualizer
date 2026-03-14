@@ -385,9 +385,27 @@ class BlockVisualizerPlugin(VisualizerPlugin):
     }});
 
     node.attr('data-node-id', d => d.id)
+
+    function linkDistance(n) {{
+        dMin = 120
+        nMin = 10
+        const k = 530 // Brzina rasta
+
+        const d = dMin + k * Math.log(n / nMin);
+        return Math.max(dMin, d);
+    }}
+
+    // for reverting after drag
+    const originalLinkStrength = 1;
+    const dist = linkDistance(nodesData.length);
+    
+    const linkForce = d3.forceLink(edgesData)
+    .id(d => d.id)
+    .distance(dist)
+    .strength(originalLinkStrength);
     
     const simulation = d3.forceSimulation(nodesData)
-    .force('link', d3.forceLink(edgesData).id(d => d.id).distance(400))
+    .force('link', linkForce)
     .force('charge', d3.forceManyBody().strength(-300))
     .force('x', d3.forceX(width / 2).strength(0.04))
     .force('y', d3.forceY(height / 2).strength(0.04))
@@ -395,6 +413,20 @@ class BlockVisualizerPlugin(VisualizerPlugin):
         Math.sqrt(d.width * d.width + d.height * d.height) / 2 + 4
     ))
     .velocityDecay(0.45);
+
+    simulation.alpha(1);
+    simulation.restart();
+
+    minEnergy = 0.0005;
+    while (simulation.alpha() > minEnergy) {{
+        simulation.tick();
+    }}
+    node.attr('transform', d => `translate(${{d.x}},${{d.y}})`);
+    link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y - (d.source.height||0)/2)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y - (d.target.height||0)/2);
 
     /* ── Tooltip ─────────────────────────────────────── */
     let isDragging = false;
@@ -457,14 +489,29 @@ class BlockVisualizerPlugin(VisualizerPlugin):
     function dragStarted(event, d) {{
         isDragging = true;
         tooltip.style.opacity = 0;
-        if (!event.active) simulation.alphaTarget(0.08).restart();
+
+        // Disable all links not connected to the node being dragged
+        linkForce.strength(link => {{
+            const sid = link.source?.id ?? link.source;
+            const tid = link.target?.id ?? link.target;
+            const keep = (sid === d.id || tid === d.id);
+            if (keep) {{
+                return originalLinkStrength;
+            }}
+            return originalLinkStrength/4;
+        }});
+        if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x; d.fy = d.y;
     }}
+
     function dragged(event, d) {{
         d.fx = event.x; d.fy = event.y;
     }}
+
     function dragEnded(event, d) {{
         isDragging = false;
+
+        linkForce.strength(originalLinkStrength);
         if (!event.active) simulation.alphaTarget(0);
         d.fx = null; d.fy = null;
     }}
