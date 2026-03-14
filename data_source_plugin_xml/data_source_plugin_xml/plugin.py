@@ -20,7 +20,19 @@ class XmlDataSourcePlugin(DataSourcePlugin):
         return "XML Parser"
 
     def get_parameters(self):
-        return [ParameterDef(name="file_path", label="XML File Path")]
+        return [
+            ParameterDef(name="file_path", label="XML File Path"),
+            ParameterDef(
+                name="ref_attr",
+                label="Reference Attribute",
+                description=(
+                    "XML attribute name used to store XPath references for circular edges. "
+                    "Defaults to 'reference'. Change to e.g. 'href' or 'link_ka' to match your XML convention."
+                ),
+                required=False,
+                default="reference",
+            ),
+        ]
 
     def parse(self, **kwargs) -> Graph:
         file_path = kwargs.get('file_path')
@@ -29,6 +41,8 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                 "Missing required parameter 'file_path' for XML Parser. "
                 "Call plugin.get_parameters() for required inputs."
             )
+        ref_attr: str = kwargs.get('ref_attr') or "reference"
+
         parser = etree.XMLParser(resolve_entities=False, no_network=True, remove_comments=True)
         tree = etree.parse(file_path, parser)
         root = tree.getroot()
@@ -36,10 +50,10 @@ class XmlDataSourcePlugin(DataSourcePlugin):
         graph = Graph(graph_id=file_path)
 
         id_map = {}
-        self._assign_node_ids(tree, root, id_map, {})
+        self._assign_node_ids(tree, root, id_map, {}, ref_attr)
 
         connection_map = {}
-        self._build_graph(graph, tree, root, id_map, connection_map)
+        self._build_graph(graph, tree, root, id_map, connection_map, ref_attr)
 
         for source_key, connections in connection_map.items():
             source_node = graph.get_node(source_key)
@@ -51,7 +65,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                             source_node=source_node,
                             target_node=target_node,
                             label=relation_name)
-                
+
                 graph.add_edge(edge)
 
         return graph
@@ -61,7 +75,8 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                      tree: etree._ElementTree,
                      root: etree._Element,
                      id_map: Dict[str, str],
-                     connection_map: Dict[str, List[Tuple]]
+                     connection_map: Dict[str, List[Tuple]],
+                     ref_attr: str = "reference",
                      ) -> Node:
         current_id = id_map[tree.getpath(root)]
         label = etree.QName(root.tag).localname
@@ -79,14 +94,14 @@ class XmlDataSourcePlugin(DataSourcePlugin):
             #                  attr=attr_name)
             # graph.add_edge(attr_edge)
             current_node.set_attribute(attr_name, attr_value)
-        
+
         for child in root:
             # Handle cyclic edges
             # Child is wrapper for reference
-            if len(child) == 1 and 'reference' in child[0].attrib:
+            if len(child) == 1 and ref_attr in child[0].attrib:
                 relation_name = etree.QName(child.tag).localname
 
-                node_xpath = child[0].attrib['reference']
+                node_xpath = child[0].attrib[ref_attr]
                 targets = tree.getroot().xpath(node_xpath)
 
                 if len(targets) != 1:
@@ -140,7 +155,7 @@ class XmlDataSourcePlugin(DataSourcePlugin):
 
             # Has grandchildren -> new child object
             else:
-                child_node = self._build_graph(graph, tree, child, id_map, connection_map)
+                child_node = self._build_graph(graph, tree, child, id_map, connection_map, ref_attr)
 
                 child_xpath = tree.getpath(child)
                 child_id = id_map.get(child_xpath)
@@ -158,12 +173,13 @@ class XmlDataSourcePlugin(DataSourcePlugin):
                         tree: etree._ElementTree,
                         root: etree._Element,
                         id_map: Dict[str, str],
-                        tag_count: Dict[str, int]
+                        tag_count: Dict[str, int],
+                        ref_attr: str = "reference",
                         ) -> Dict[str, str]:
         """
         Creates a map which maps absolute xpaths into human readable unique ids.
         """
-        if 'reference' in root.attrib:
+        if ref_attr in root.attrib:
             return id_map
 
         local = etree.QName(root.tag).localname
@@ -176,8 +192,8 @@ class XmlDataSourcePlugin(DataSourcePlugin):
         id_map[tree.getpath(root)] = generated_id
 
         for child in root:
-            self._assign_node_ids(tree, child, id_map, tag_count)
-        
+            self._assign_node_ids(tree, child, id_map, tag_count, ref_attr)
+
         return id_map
 
 if __name__ == '__main__':

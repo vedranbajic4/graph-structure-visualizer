@@ -18,4 +18,5 @@ urlpatterns = [
     path('api/cli/', views.cli_execute, name='cli_execute'),
     path('api/workspace/switch/', views.switch_workspace, name='switch_workspace'),
     path('api/workspace/delete/', views.delete_workspace, name='delete_workspace'),
+    path('api/plugin/parameters/', views.plugin_parameters, name='plugin_parameters'),
 ]

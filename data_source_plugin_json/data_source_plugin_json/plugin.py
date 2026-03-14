@@ -19,7 +19,19 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         return "JSON Parser"
 
     def get_parameters(self):
-        return [ParameterDef(name="file_path", label="JSON File Path")]
+        return [
+            ParameterDef(name="file_path", label="JSON File Path"),
+            ParameterDef(
+                name="id_attr",
+                label="ID Attribute",
+                description=(
+                    "JSON key used to identify nodes and resolve circular references. "
+                    "Defaults to '@id'. Change to e.g. '@ref' to use a different convention."
+                ),
+                required=False,
+                default="@id",
+            ),
+        ]
 
     def parse(self, **kwargs) -> Graph:
         file_path = kwargs.get('file_path')
@@ -28,16 +40,18 @@ class JsonDataSourcePlugin(DataSourcePlugin):
                 "Missing required parameter 'file_path' for JSON Parser. "
                 "Call plugin.get_parameters() for required inputs."
             )
+        id_attr: str = kwargs.get('id_attr') or "@id"
+
         with open(file_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
 
         graph = Graph(graph_id=file_path)
 
-        # Two-pass approach so forward @id references resolve correctly
+        # Two-pass approach so forward id_attr references resolve correctly
         id_registry: Dict[str, Any] = {}
         roots = data if isinstance(data, list) else [data]
         for root in roots:
-            self._collect_ids(root, id_registry)
+            self._collect_ids(root, id_registry, id_attr)
 
         visited: Set[str] = set()
         edge_counter = [0]
@@ -50,22 +64,23 @@ class JsonDataSourcePlugin(DataSourcePlugin):
                 edge_counter=edge_counter,
                 parent_node=None,
                 edge_label=None,
+                id_attr=id_attr,
             )
 
         return graph
 
-    # ── pass 1: collect all @id values ───────────────────────────────────────
+    # ── pass 1: collect all id_attr values ───────────────────────────────────
 
-    def _collect_ids(self, obj: Any, registry: Dict[str, Any]) -> None:
+    def _collect_ids(self, obj: Any, registry: Dict[str, Any], id_attr: str) -> None:
         if isinstance(obj, dict):
-            node_id = obj.get("@id")
+            node_id = obj.get(id_attr)
             if node_id is not None:
                 registry[str(node_id)] = obj
             for value in obj.values():
-                self._collect_ids(value, registry)
+                self._collect_ids(value, registry, id_attr)
         elif isinstance(obj, list):
             for item in obj:
-                self._collect_ids(item, registry)
+                self._collect_ids(item, registry, id_attr)
 
     # ── pass 2: build nodes and edges ────────────────────────────────────────
 
@@ -78,6 +93,7 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         edge_counter: List[int],
         parent_node: Optional[JSONNode],
         edge_label: Optional[str],
+        id_attr: str = "@id",
     ) -> Optional[JSONNode]:
         """
         Recursively turn a JSON object into a node, connect it to its parent,
@@ -86,14 +102,14 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         if not isinstance(obj, dict):
             return None
 
-        # Determine node ID
-        raw_id = obj.get("@id")
+        # Determine node ID using the configurable id_attr key
+        raw_id = obj.get(id_attr)
         node_id = str(raw_id) if raw_id is not None else f"node_{uuid.uuid4().hex[:8]}"
 
         # Retrieve existing node or create a new one
         current_node = graph.get_node(node_id)
         if current_node is None:
-            scalar_attrs = self._extract_scalars(obj, id_registry)
+            scalar_attrs = self._extract_scalars(obj, id_registry, id_attr)
             current_node = JSONNode(node_id, **scalar_attrs)
             graph.add_node(current_node)
 
@@ -108,29 +124,29 @@ class JsonDataSourcePlugin(DataSourcePlugin):
 
         # Recurse into nested objects and handle reference strings
         for key, value in obj.items():
-            if key == "@id":
+            if key == id_attr:
                 continue
 
             if isinstance(value, dict):
                 # Nested object → child node
                 self._parse_object(value, graph, id_registry, visited,
-                                   edge_counter, current_node, key)
+                                   edge_counter, current_node, key, id_attr)
 
             elif isinstance(value, list):
                 for item in value:
                     if isinstance(item, dict):
                         self._parse_object(item, graph, id_registry, visited,
-                                           edge_counter, current_node, key)
+                                           edge_counter, current_node, key, id_attr)
                     elif isinstance(item, str) and item in id_registry:
                         target = self._resolve_reference(
-                            item, graph, id_registry, visited, edge_counter)
+                            item, graph, id_registry, visited, edge_counter, id_attr)
                         if target is not None:
                             self._add_edge(graph, edge_counter, current_node, target, key)
 
             elif isinstance(value, str) and value in id_registry:
-                # String reference to another @id → edge, not attribute
+                # String reference to another node (via id_attr) → edge, not attribute
                 target = self._resolve_reference(
-                    value, graph, id_registry, visited, edge_counter)
+                    value, graph, id_registry, visited, edge_counter, id_attr)
                 if target is not None:
                     self._add_edge(graph, edge_counter, current_node, target, key)
 
@@ -143,6 +159,7 @@ class JsonDataSourcePlugin(DataSourcePlugin):
         id_registry: Dict[str, Any],
         visited: Set[str],
         edge_counter: List[int],
+        id_attr: str = "@id",
     ) -> Optional[JSONNode]:
         """Return the node for ref_id, creating it first if necessary."""
         node = graph.get_node(ref_id)
@@ -155,20 +172,21 @@ class JsonDataSourcePlugin(DataSourcePlugin):
                 edge_counter=edge_counter,
                 parent_node=None,
                 edge_label=None,
+                id_attr=id_attr,
             )
         return node
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _extract_scalars(obj: dict, id_registry: Dict[str, Any]) -> dict:
+    def _extract_scalars(obj: dict, id_registry: Dict[str, Any], id_attr: str = "@id") -> dict:
         """
         Pull out scalar key/value pairs from a JSON object.
-        Skips: "@id", nested dicts, lists, and strings that are @id references.
+        Skips: the id_attr key, nested dicts, lists, and strings that are id_attr references.
         """
         attrs = {}
         for key, value in obj.items():
-            if key == "@id" or key == "id":
+            if key == id_attr or key == "id":
                 continue
             if isinstance(value, (dict, list)):
                 continue

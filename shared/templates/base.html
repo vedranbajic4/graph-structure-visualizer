@@ -45,22 +45,25 @@
 
 <div class="upload-panel" id="upload-panel" style="display:none;">
     <form id="upload-form" enctype="multipart/form-data" onsubmit="return handleUpload(event)">
-        <label for="upload-plugin">Data Source:</label>
-        <select id="upload-plugin" name="plugin_name" required>
-            <option value="">-- Select --</option>
-            {% for ds in data_sources %}
-            <option value="{{ ds }}">{{ ds }}</option>
-            {% endfor %}
-        </select>
+        <div class="upload-main-row">
+            <label for="upload-plugin">Data Source:</label>
+            <select id="upload-plugin" name="plugin_name" required onchange="onPluginChange(this.value)">
+                <option value="">-- Select --</option>
+                {% for ds in data_sources %}
+                <option value="{{ ds }}">{{ ds }}</option>
+                {% endfor %}
+            </select>
 
-        <label for="upload-file">File:</label>
-        <input type="file" id="upload-file" name="file" required>
+            <label for="upload-file">File:</label>
+            <input type="file" id="upload-file" name="file" required>
 
-        <label for="upload-name">Workspace name (optional):</label>
-        <input type="text" id="upload-name" name="workspace_name" placeholder="My Graph">
+            <label for="upload-name">Workspace name (optional):</label>
+            <input type="text" id="upload-name" name="workspace_name" placeholder="My Graph">
 
-        <button type="submit" class="btn btn-primary">Load</button>
-        <button type="button" class="btn" onclick="toggleUpload()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Load</button>
+            <button type="button" class="btn" onclick="toggleUpload()">Cancel</button>
+        </div>
+        <div id="plugin-extra-params"></div>
     </form>
     <div id="upload-error" class="error-msg" style="display:none;"></div>
 </div>
@@ -288,6 +291,39 @@ async function handleUpload(e) {
     return false;
 }
 
+
+/* ============================================================
+   Plugin parameter injection
+   ============================================================ */
+async function onPluginChange(plugin) {
+    const container = document.getElementById('plugin-extra-params');
+    container.innerHTML = '';
+    if (!plugin) return;
+
+    const resp = await fetch(URLS.plugin_params + '?plugin=' + encodeURIComponent(plugin));
+    const data = await resp.json();
+
+    for (const p of data.params) {
+        const label = document.createElement('label');
+        label.setAttribute('for', 'param-' + p.name);
+        label.textContent = p.label + (p.required ? ':' : ' (optional):');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'param-' + p.name;
+        input.name = p.name;
+        input.required = !!p.required;
+        if (p.default !== null && p.default !== undefined) {
+            input.placeholder = String(p.default);
+        }
+        if (p.description) {
+            input.title = p.description;
+        }
+
+        container.appendChild(label);
+        container.appendChild(input);
+    }
+}
 
 /* ============================================================
    Visualizer switch
